@@ -18,14 +18,15 @@ import agent
 import planning
 
 app = FastAPI(title="Mess Kitchen Procurement Agent")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js dev server
+    allow_origins=[
+        "http://localhost:3000",
+        "https://procurement-pilot-frontend.onrender.com",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.on_event("startup")
 def startup():
