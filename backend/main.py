@@ -21,9 +21,9 @@ app = FastAPI(title="Mess Kitchen Procurement Agent")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "https://procurement-pilot-frontend.onrender.com",
-    ],
+    "http://localhost:3000",
+    "https://procurement-pilot-frontend.onrender.com",
+],
     allow_methods=["*"],
     allow_headers=["*"],
 )
