@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mess Kitchen Procurement Agent — Standards &amp; Benchmarking Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root{
+    --paper:#E7E8D1; --white:#FFFFFF; --ink:#2B2118; --ink-deep:#1C1712;
+    --terracotta:#B85042; --terracotta-deep:#8F3C30; --terracotta-light:#D98F82;
+    --sage:#7A9B76; --sage-deep:#5F7D5C; --sage-light:#A7BEAE;
+    --ink-soft:#6B5D52; --taupe:#9C8B7E;
+    --line: rgba(28,23,18,0.16); --line-strong: var(--ink); --line-dark: rgba(231,232,209,0.24);
+    --amber:#C89B3C; --amber-light:#E2C077;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:var(--paper); -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%232B2118' fill-opacity='0.045' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E"); }
+  h1,h2,h3,.serif{font-family:'Fraunces',Georgia,serif; margin:0; font-weight:400;}
+  p{margin:0;}
+  .container{max-width:1160px; margin:0 auto; padding:0 40px;}
+  @media (max-width:760px){ .container{padding:0 22px;} }
+  a{color:inherit;} ::selection{ background:var(--terracotta); color:var(--white); }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  #progress-top{ position:fixed; top:0; left:0; height:3px; width:0%; background:var(--terracotta); z-index:300; }
+  #scene-tag{ position:fixed; left:24px; bottom:22px; z-index:300; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); font-weight:500; background:var(--paper); padding:7px 11px; border:1px solid var(--line-strong); }
+  body.on-dark #scene-tag{ color:var(--paper); background:var(--ink-deep); border-color:var(--line-dark); }
+  @media (max-width:720px){ #scene-tag{ left:16px; bottom:16px; font-size:10px;} }
+
+  .scene{ padding:110px 0; position:relative; }
+  .scene--dark{ background:var(--ink-deep); color:var(--paper); }
+  .scene--paper{ background:var(--paper); color:var(--ink); }
+  .scene--white{ background:var(--white); color:var(--ink); }
+
+  .kicker{ font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.2em; text-transform:uppercase; font-weight:500; color:var(--terracotta); margin-bottom:18px; display:flex; align-items:center; gap:12px; }
+  .scene--dark .kicker{ color:var(--terracotta-light); }
+  .kicker::before{ content:''; width:26px; height:1px; background:currentColor; display:inline-block; }
+  .headline{ font-size:clamp(28px,4.2vw,50px); line-height:1.08; letter-spacing:-0.01em; max-width:900px; }
+  .headline .accent{ color:var(--terracotta); }
+  .scene--dark .headline .accent{ color:var(--terracotta-light); }
+  .sub{ font-size:clamp(14.5px,1.5vw,17px); line-height:1.65; color:var(--ink-soft); max-width:640px; margin-top:18px; }
+  .scene--dark .sub{ color:#C9BEB4; }
+  .section-head{ margin-bottom:46px; }
+
+  #masthead{ position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:26px clamp(24px,4vw,48px) 0; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .mark{ width:26px; height:26px; border:1.5px solid var(--terracotta-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--terracotta-light); }
+  .brand .word{ font-family:'Fraunces',serif; font-weight:600; font-size:17px; letter-spacing:-0.01em; color:var(--paper); }
+  .brand .word b{ color:var(--terracotta-light); font-weight:600; }
+  .edition-tag{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#C9BEB4; border:1px solid var(--line-dark); padding:7px 13px; }
+  @media (max-width:640px){ .edition-tag{ display:none; } }
+
+  #hero{ position:relative; min-height:100vh; overflow:hidden; background:var(--ink-deep); padding:0; display:flex; flex-direction:column; }
+  #halftone-bg{ position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; }
+  .hero-scrim{ position:absolute; inset:0; z-index:1; pointer-events:none; }
+  .hero-scrim .radial{ position:absolute; inset:0; background:radial-gradient(circle at 50% 42%, rgba(28,23,18,0.97) 0%, rgba(28,23,18,0.93) 38%, rgba(28,23,18,0.68) 62%, rgba(28,23,18,0.22) 100%); }
+  .hero-scrim .verticals{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(28,23,18,0.78) 0%, transparent 22%, transparent 78%, rgba(28,23,18,0.85) 100%); }
+  .hero-inner{ position:relative; z-index:2; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:110px 24px 0; }
+
+  .score-dial-wrap{ position:relative; width:230px; height:230px; margin:0 auto 30px; }
+  .score-dial-wrap svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .score-dial-num{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .score-dial-num .n{ font-family:'Fraunces',serif; font-weight:600; font-size:64px; color:var(--paper); line-height:1; }
+  .score-dial-num .n span{ font-size:26px; color:#a49a90; font-weight:400; }
+  .score-dial-num .l{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--terracotta-light); margin-top:8px; }
+
+  .hero-inner .headline{ max-width:880px; color:var(--paper); }
+  .hero-inner .sub{ max-width:600px; margin-left:auto; margin-right:auto; }
+  #scrollcue{ position:relative; z-index:2; margin:40px auto 30px; display:flex; flex-direction:column; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#a49a90; }
+  #scrollcue .dash{ width:1px; height:30px; background:#8A7E73; animation:cuemove 1.8s ease-in-out infinite; }
+  @keyframes cuemove{ 0%,100%{ opacity:.2; } 50%{ opacity:1; } }
+
+  .marquee-band{ background:var(--ink); border-top:1px solid var(--ink-deep); border-bottom:1px solid var(--ink-deep); overflow:hidden; padding:15px 0; position:relative; z-index:3; }
+  .marquee-track{ display:inline-flex; white-space:nowrap; animation:marquee 34s linear infinite; }
+  @keyframes marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  .marquee-item{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.05em; color:var(--paper); padding:0 26px; display:inline-flex; align-items:center; gap:26px; }
+  .marquee-item b{ color:var(--terracotta-light); font-weight:600; }
+  .marquee-dot{ width:4px; height:4px; border-radius:50%; background:var(--terracotta); display:inline-block; }
+
+  .callout{ margin-top:30px; padding:22px 24px; background:var(--ink-deep); color:var(--paper); font-size:14.5px; line-height:1.65; max-width:700px; border-left:4px solid var(--terracotta); }
+  .scene--dark .callout{ background:rgba(231,232,209,0.06); border-left-color:var(--terracotta-light); }
+  .callout b{ color:var(--terracotta-light); }
+
+  /* OKR table */
+  .okr-obj{ margin-top:44px; border:1px solid var(--line-strong); background:var(--white); }
+  .okr-obj + .okr-obj{ margin-top:22px; }
+  .okr-obj-head{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 22px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .okr-obj-head h4{ font-family:'Fraunces',serif; font-size:16.5px; font-weight:600; max-width:560px; line-height:1.35; }
+  .okr-obj-score{ font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600; color:var(--terracotta-deep); white-space:nowrap; }
+  .okr-kr{ display:grid; grid-template-columns:1.4fr 90px; gap:16px; align-items:center; padding:13px 22px; border-top:1px dashed var(--line); }
+  .okr-kr:first-of-type{ border-top:none; }
+  .okr-kr-label{ font-size:13px; color:var(--ink-soft); line-height:1.5; }
+  .bar-track{ height:7px; background:var(--line); position:relative; overflow:hidden; }
+  .bar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--terracotta); }
+  .okr-kr-val{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink); text-align:right; margin-top:5px; }
+
+  /* composite weighting */
+  .weight-row{ display:grid; grid-template-columns:1.6fr 70px 2fr 60px; gap:18px; align-items:center; padding:15px 0; border-top:1px solid var(--line-strong); }
+  .weight-row.head{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); border-top:none; padding-bottom:12px; }
+  .weight-row:last-child{ border-bottom:1px solid var(--line-strong); }
+  .weight-cat{ font-family:'Fraunces',serif; font-size:15px; font-weight:600; }
+  .weight-pct{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft); }
+  .weight-score{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; text-align:right; font-weight:600; }
+  .weight-table{ margin-top:44px; max-width:820px; }
+  .composite-total{ margin-top:0; padding:22px 0 0; display:flex; justify-content:space-between; align-items:baseline; }
+  .composite-total .ct-l{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; }
+  .composite-total .ct-n{ font-family:'Fraunces',serif; font-size:32px; font-weight:600; color:var(--terracotta-deep); }
+
+  /* TRL scale */
+  .trl-scale{ margin-top:48px; display:flex; border:1px solid var(--line-dark); max-width:820px; }
+  .trl-step{ flex:1; text-align:center; padding:16px 6px; border-right:1px solid var(--line-dark); font-family:'IBM Plex Mono',monospace; font-size:11px; color:#8A7E73; position:relative; }
+  .trl-step:last-child{ border-right:none; }
+  .trl-step.active{ background:rgba(217,143,130,0.16); color:var(--terracotta-light); font-weight:600; }
+  .trl-step .tn{ font-size:16px; display:block; margin-bottom:4px; }
+  .trl-marker{ margin-top:16px; font-family:'Fraunces',serif; font-style:italic; font-size:16px; color:var(--paper); max-width:680px; }
+
+  /* PMF card */
+  .pmf-card{ margin-top:44px; border:1px solid var(--line-strong); background:var(--white); max-width:720px; padding:28px; }
+  .pmf-badge{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:5px 11px; background:var(--ink-deep); color:var(--amber-light); margin-bottom:16px; }
+  .pmf-card h4{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin-bottom:10px; }
+  .pmf-card p{ font-size:14px; line-height:1.65; color:var(--ink-soft); }
+  .pmf-card p + p{ margin-top:10px; }
+
+  /* checklist */
+  .check-grid{ margin-top:44px; display:grid; grid-template-columns:repeat(2,1fr); border-top:1px solid var(--line-strong); border-left:1px solid var(--line-strong); max-width:900px; }
+  .check-grid > div{ border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); padding:20px 22px; display:flex; gap:14px; align-items:flex-start; }
+  @media (max-width:700px){ .check-grid{ grid-template-columns:1fr; } }
+  .check-mark{ font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; flex-shrink:0; width:22px; }
+  .check-mark.yes{ color:var(--sage-deep); }
+  .check-mark.no{ color:var(--terracotta-deep); }
+  .check-body h5{ font-family:'Fraunces',serif; font-size:14.5px; font-weight:600; margin-bottom:4px; }
+  .check-body p{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+
+  /* market signal */
+  .market-grid{ margin-top:44px; display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line-dark); border-left:1px solid var(--line-dark); }
+  .market-grid > div{ border-right:1px solid var(--line-dark); border-bottom:1px solid var(--line-dark); padding:22px; }
+  @media (max-width:760px){ .market-grid{ grid-template-columns:repeat(2,1fr); } }
+  .market-grid .mn{ font-family:'Fraunces',serif; font-size:24px; font-weight:600; color:var(--terracotta-light); }
+  .market-grid .ml{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#a49a90; margin-top:6px; line-height:1.5; }
+
+  /* proud / building */
+  .pb-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0; border-top:1px solid var(--line-strong); border-left:1px solid var(--line-strong); margin-top:48px; }
+  .pb-grid > div{ border-right:1px solid var(--line-strong); }
+  @media (max-width:800px){ .pb-grid{ grid-template-columns:1fr; } }
+  .pb-col-head{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:600; padding:16px 22px; border-bottom:1px solid var(--line-strong); }
+  .pb-col-head.proud{ background:var(--sage); color:var(--ink-deep); }
+  .pb-col-head.building{ background:var(--amber); color:var(--ink-deep); }
+  .pb-col-head.themcol{ background:var(--taupe); color:var(--white); }
+  .pb-col-head.uscol{ background:var(--terracotta); color:var(--white); }
+  .term{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink); }
+  .pb-item{ padding:15px 22px; font-size:13.5px; line-height:1.55; color:var(--ink-soft); border-bottom:1px solid var(--line); }
+
+  /* close */
+  #close{ background:var(--ink-deep); color:var(--paper); padding:140px 0 70px; }
+  .close-pitch{ font-family:'Fraunces',serif; font-size:clamp(18px,2.1vw,24px); line-height:1.6; font-style:italic; color:var(--paper); max-width:780px; border-left:3px solid var(--terracotta-light); padding-left:26px; }
+  .close-score-row{ display:flex; gap:56px; margin-top:56px; flex-wrap:wrap; }
+  .close-score .csn{ font-family:'Fraunces',serif; font-weight:600; font-size:38px; color:var(--terracotta-light); }
+  .close-score .csl{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:#B7ABA0; margin-top:6px; max-width:170px; }
+  .close-foot{ margin-top:80px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:24px; border-top:1px solid var(--line-dark); padding-top:26px; }
+  .close-foot .word{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; }
+  .close-foot .word b{ color:var(--terracotta-light); }
+  .close-foot .tm{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; color:#8A7E73; }
+
+  [data-r]{ opacity:0; }
+  [data-r].in-view{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){ [data-r]{ opacity:1 !important; } }
+</style>
+</head>
+<body>
+
+<div id="progress-top"></div>
+<div id="scene-tag" class="mono">01 / 09</div>
+
+<!-- ============ HERO ============ -->
+<section class="scene scene--dark" id="hero">
+  <canvas id="halftone-bg"></canvas>
+  <div class="hero-scrim"><div class="radial"></div><div class="verticals"></div></div>
+
+  <header id="masthead">
+    <div class="brand"><div class="mark">M</div><div class="word">Mess Kitchen <b>Procurement Agent</b></div></div>
+    <div class="edition-tag mono">Standards &amp; Benchmarking Review</div>
+  </header>
+
+  <div class="hero-inner">
+    <div class="kicker" data-r>Self-Graded, Against Real Frameworks</div>
+
+    <div class="score-dial-wrap" data-r>
+      <svg viewBox="0 0 230 230">
+        <circle cx="115" cy="115" r="98" fill="none" stroke="rgba(231,232,209,0.14)" stroke-width="10"></circle>
+        <circle id="scoreRing" cx="115" cy="115" r="98" fill="none" stroke="#D98F82" stroke-width="10" stroke-linecap="round" stroke-dasharray="615.75" stroke-dashoffset="615.75"></circle>
+      </svg>
+      <div class="score-dial-num">
+        <div class="n"><span id="scoreNum">0</span><span>/100</span></div>
+        <div class="l">Composite Score</div>
+      </div>
+    </div>
+
+    <h1 class="headline" data-r>Graded like a real objective, not a pitch slide.</h1>
+    <p class="sub" data-r>Four frameworks, reweighted honestly for a hackathon-stage system. Nothing here is inflated to look good, the gaps are on the record because that's what makes the number worth trusting.</p>
+  </div>
+
+  <div id="scrollcue"><span>Scroll</span><span class="dash"></span></div>
+</section>
+
+<div class="marquee-band"><div class="marquee-track" id="marquee-track"></div></div>
+
+<!-- ============ 02 OKR EXPLAINER + TABLE ============ -->
+<section class="scene scene--paper" id="s2">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>01 · Google-Style OKR Scoring</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>Scored against ambitious objectives, the way Google actually grades them.</h2>
+      <p class="sub" data-r>In real OKR practice, a key result landing at <b style="color:var(--ink)">0.7 is considered great</b>. A clean 1.0 across the board is usually read as a sign the goal wasn't ambitious enough. That's the standard we held ourselves to below.</p>
+    </div>
+
+    <div data-r>
+      <div class="okr-obj">
+        <div class="okr-obj-head"><h4>O1 · The architecture actually earns the word "agentic"</h4><div class="okr-obj-score">0.85</div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Deterministic vs. agentic split cleanly implemented and demonstrated</div><div><div class="bar-track"><div class="bar-fill" data-score="90"></div></div><div class="okr-kr-val">0.90</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Closed-loop recovery demonstrated across two distinct failure modes</div><div><div class="bar-track"><div class="bar-fill" data-score="85"></div></div><div class="okr-kr-val">0.85</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Full observe → decide → act → replan loop with a persistent audit trace</div><div><div class="bar-track"><div class="bar-fill" data-score="80"></div></div><div class="okr-kr-val">0.80</div></div></div>
+      </div>
+
+      <div class="okr-obj">
+        <div class="okr-obj-head"><h4>O2 · Trustworthy enough to hold real budget authority</h4><div class="okr-obj-score">0.35</div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Hard, agent-independent budget cap enforced server-side</div><div><div class="bar-track"><div class="bar-fill" data-score="45"></div></div><div class="okr-kr-val">0.45</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Automated evaluation suite validating decisions against ground truth</div><div><div class="bar-track"><div class="bar-fill" data-score="30"></div></div><div class="okr-kr-val">0.30</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Security and multi-tenant isolation review completed</div><div><div class="bar-track"><div class="bar-fill" data-score="30"></div></div><div class="okr-kr-val">0.30</div></div></div>
+      </div>
+
+      <div class="okr-obj">
+        <div class="okr-obj-head"><h4>O3 · Market pain point validated, not just asserted</h4><div class="okr-obj-score">0.45</div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Pain point clearly documented and grounded in real kitchen operations</div><div><div class="bar-track"><div class="bar-fill" data-score="75"></div></div><div class="okr-kr-val">0.75</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Direct user validation: interviews, survey, or pilot usage data</div><div><div class="bar-track"><div class="bar-fill" data-score="10"></div></div><div class="okr-kr-val">0.10</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">TAM / SAM / SOM sized with credible, cited sourcing</div><div><div class="bar-track"><div class="bar-fill" data-score="50"></div></div><div class="okr-kr-val">0.50</div></div></div>
+      </div>
+
+      <div class="okr-obj">
+        <div class="okr-obj-head"><h4>O4 · Hackathon execution and demo-readiness</h4><div class="okr-obj-score">0.90</div></div>
+        <div class="okr-kr"><div class="okr-kr-label">End-to-end system live-deployed, not slideware</div><div><div class="bar-track"><div class="bar-fill" data-score="95"></div></div><div class="okr-kr-val">0.95</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Rehearsed technical narrative, defensible under jury questioning</div><div><div class="bar-track"><div class="bar-fill" data-score="90"></div></div><div class="okr-kr-val">0.90</div></div></div>
+        <div class="okr-kr"><div class="okr-kr-label">Presentation materials polished and honest</div><div><div class="bar-track"><div class="bar-fill" data-score="85"></div></div><div class="okr-kr-val">0.85</div></div></div>
+      </div>
+    </div>
+
+    <div class="callout" data-r><b>Straight average across all four objectives: 64%.</b> Against real, ambitious goals, not softened ones, that is a legitimately good OKR outcome. It is not, however, the number a hackathon jury should be shown on its own, because it grades a demo against enterprise production standards nobody expects from it yet. That's what the reweighting on the next screen corrects for.</div>
+  </div>
+</section>
+
+<!-- ============ 03 REWEIGHTED COMPOSITE ============ -->
+<section class="scene scene--white" id="s3">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>02 · Reweighted for What a Hackathon Jury Actually Judges</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>Same honest scores, weighted for the stage this project is actually at.</h2>
+      <p class="sub" data-r>Production security audits and load-tested concurrency aren't what a hackathon jury is scoring. Working architecture, real trade-off reasoning, a live demo, and knowing your own gaps are.</p>
+    </div>
+
+    <div class="weight-table" data-r>
+      <div class="weight-row head"><div>Category</div><div>Weight</div><div>Score</div><div></div></div>
+      <div class="weight-row"><div class="weight-cat">Technical Architecture &amp; Agentic Rigor</div><div class="weight-pct">25%</div><div class="bar-track"><div class="bar-fill" data-score="87"></div></div><div class="weight-score">87</div></div>
+      <div class="weight-row"><div class="weight-cat">Execution &amp; Demo Quality</div><div class="weight-pct">20%</div><div class="bar-track"><div class="bar-fill" data-score="90"></div></div><div class="weight-score">90</div></div>
+      <div class="weight-row"><div class="weight-cat">Auditability &amp; Responsible-AI Practice</div><div class="weight-pct">15%</div><div class="bar-track"><div class="bar-fill" data-score="88"></div></div><div class="weight-score">88</div></div>
+      <div class="weight-row"><div class="weight-cat">Problem / Solution Fit &amp; Originality</div><div class="weight-pct">20%</div><div class="bar-track"><div class="bar-fill" data-score="80"></div></div><div class="weight-score">80</div></div>
+      <div class="weight-row"><div class="weight-cat">Production-Readiness Honesty &amp; Roadmap Clarity</div><div class="weight-pct">20%</div><div class="bar-track"><div class="bar-fill" data-score="85"></div></div><div class="weight-score">85</div></div>
+      <div class="composite-total"><div class="ct-l">Weighted Composite</div><div class="ct-n">86 / 100</div></div>
+    </div>
+
+    <div class="callout" style="background:var(--ink-deep);" data-r>This is the number we're standing behind in the room. It's built from a documented weighting, not picked to look round, and the two lowest-scoring rows are the exact same gaps we've already told you about. Ask us about any single row and we'll walk you through it.</div>
+  </div>
+</section>
+
+<!-- ============ 04 TRL ============ -->
+<section class="scene scene--dark" id="s4">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>03 · Technology Readiness Level</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>Placed honestly on the NASA / DoD maturity scale.</h2>
+      <p class="sub" data-r>TRL exists precisely so nobody has to argue about whether "working demo" means "production system." We're not claiming either extreme.</p>
+    </div>
+
+    <div class="trl-scale" data-r>
+      <div class="trl-step"><span class="tn">1</span>Basic principles</div>
+      <div class="trl-step"><span class="tn">2</span>Concept formed</div>
+      <div class="trl-step"><span class="tn">3</span>Proof of concept</div>
+      <div class="trl-step"><span class="tn">4</span>Lab validated</div>
+      <div class="trl-step active"><span class="tn">5</span>Relevant env.</div>
+      <div class="trl-step"><span class="tn">6</span>System demo'd</div>
+      <div class="trl-step"><span class="tn">7</span>Operational demo</div>
+      <div class="trl-step"><span class="tn">8</span>Qualified</div>
+      <div class="trl-step"><span class="tn">9</span>Proven in use</div>
+    </div>
+    <p class="trl-marker" data-r>We're calling this TRL 5: a full system, integrated and validated in a relevant, simulated kitchen environment, live-deployed and demo-triggerable, not a slide. TRL 7 and above would require this running against a real kitchen's real vendors and real money, which hasn't happened yet.</p>
+  </div>
+</section>
+
+<!-- ============ 05 PMF ============ -->
+<section class="scene scene--paper" id="s5">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>04 · Sean Ellis PMF Test</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>The one benchmark we haven't earned yet, and we're saying so first.</h2>
+    </div>
+
+    <div class="pmf-card" data-r>
+      <div class="pmf-badge">Not Yet Measured</div>
+      <h4>"How would you feel if you could no longer use this product?"</h4>
+      <p>The standard test: survey real users, and if 40% or more say they'd be "very disappointed" to lose it, that's a strong product-market fit signal. We have not run this survey.</p>
+      <p>Running it today would measure enthusiasm for a hackathon demo, not for a product someone has actually depended on. The honest next step is a real pilot kitchen, a few weeks of real usage, then this exact survey. Until then, this line stays at zero rather than getting rounded up.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 RESPONSIBLE AI CHECKLIST ============ -->
+<section class="scene scene--white" id="s6">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>05 · Auditability &amp; Responsible-AI Practice</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>An informal check against how trustworthy AI systems are actually built.</h2>
+    </div>
+
+    <div class="check-grid" data-r>
+      <div><div class="check-mark yes">YES</div><div class="check-body"><h5>Full decision trace, persisted</h5><p>Every run logs what was observed, decided, done, and what happened next.</p></div></div>
+      <div><div class="check-mark yes">YES</div><div class="check-body"><h5>Deterministic gating on model calls</h5><p>The LLM is only invoked when a real shortage exists, not on every request.</p></div></div>
+      <div><div class="check-mark yes">YES</div><div class="check-body"><h5>Clear human-set objective boundary</h5><p>Humans set menu and budget. The agent owns execution within that, not the goal itself.</p></div></div>
+      <div><div class="check-mark no">NO</div><div class="check-body"><h5>Automated eval suite</h5><p>Agent decisions are checked by hand today, not against a scripted, scored test set.</p></div></div>
+      <div><div class="check-mark no">NO</div><div class="check-body"><h5>Hard, agent-independent financial guardrail</h5><p>Budget is a constraint the agent reasons over, not a wall it structurally cannot cross.</p></div></div>
+      <div><div class="check-mark no">NO</div><div class="check-body"><h5>Formal security / isolation review</h5><p>Fine for a single-tenant pilot. Required before a second kitchen ever onboards.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 PRODUCT-MARKET FIT ============ -->
+<section class="scene scene--dark" id="s7">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>06 · Product-Market Fit, As It Actually Stands</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>A real, specific pain point. A sized market. No confirmed demand signal yet.</h2>
+      <p class="sub" data-r>The pain is concrete: a preferred vendor goes unavailable or rejects an order, and someone has to notice, re-check price against reliability, and re-order, under time pressure, by hand. That's the exact failure this system automates. What it doesn't have yet is a kitchen that's used it for a month and told us they'd miss it.</p>
+    </div>
+
+    <div class="market-grid" data-r>
+      <div><div class="mn">45,473</div><div class="ml">AISHE-listed colleges, national addressable base</div></div>
+      <div><div class="mn">465</div><div class="ml">colleges in the Hyderabad corridor, initial target</div></div>
+      <div><div class="mn">$12.45B → $19.14B</div><div class="ml">sector TAM, current to projected</div></div>
+      <div><div class="mn">0</div><div class="ml">kitchens with confirmed repeat usage, today</div></div>
+    </div>
+
+    <p class="connective" style="margin-top:32px; font-family:'Fraunces',serif; font-style:italic; font-size:19px; max-width:760px;" data-r>Market size tells you the ceiling. It doesn't tell you anyone's climbing toward it yet. We're showing both numbers because a jury that only hears the big one will ask about the small one anyway.</p>
+  </div>
+</section>
+
+<!-- ============ 07 COMPETITIVE SCRUTINY ============ -->
+<section class="scene scene--paper" id="s7b">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>07 · Held Up Against Real Competitors, Not a Straw Man</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>Two adjacent categories exist. Neither does this job.</h2>
+      <p class="sub" data-r>A quick note on terms before the comparison: <span class="term">ERP</span> (Enterprise Resource Planning) is the big internal software system a large company runs its finances, supply chain, and operations on, think SAP. <span class="term">RFQ</span> (Request for Quote) is a formal bidding event where a buyer asks several suppliers to compete for a contract. SAP Ariba, Coupa, and S/4HANA are specific ERP and e-procurement products that large enterprises already run. A mess kitchen has none of these, no ERP, no RFQ process, no existing system to plug into.</p>
+    </div>
+
+    <div class="pb-grid" data-r>
+      <div>
+        <div class="pb-col-head themcol">Enterprise Procurement AI (Pactum, Procol, PRMAI, Spendflo)</div>
+        <div class="pb-item">Genuinely autonomous and real, they negotiate with suppliers and execute purchase orders on their own. But they're built to sit on top of an ERP, they read and write supplier data through SAP Ariba, Coupa, or S/4HANA. A mess kitchen has none of that to plug into.</div>
+        <div class="pb-item">They're built around a formal RFQ, a negotiation event with multiple suppliers competing for a contract. A mess kitchen buying onions tomorrow has no negotiation, it's a spot-market retail purchase at a posted price. The mechanism these tools automate doesn't exist here.</div>
+        <div class="pb-item">Priced and justified against large contract value. A single onion order here is ₹96. The tooling isn't just oversized, the economics can't clear at this order size.</div>
+      </div>
+      <div>
+        <div class="pb-col-head uscol">This System</div>
+        <div class="pb-item">Vendor score is 60% reliability, 40% price, the same weighted-scorecard methodology procurement literature treats as best practice, just sized for two inputs instead of the dozen an enterprise contract needs.</div>
+        <div class="pb-item">The LLM never computes the score. It's deterministic Python. The agent receives an already-ranked vendor list from a real tool call, it cannot misweight the formula or hallucinate a number, because it never calculates one.</div>
+        <div class="pb-item">The tiebreak (reliability first, then alphabetical) was tested against a manufactured exact-tie case, not just reasoned about on a whiteboard.</div>
+        <div class="pb-item">Proven under a condition scorecards rarely get shown live: the top-scored vendor ran out of stock mid-order, and the system fell through to the next vendor with no human input, in a real run, not a rehearsed one.</div>
+      </div>
+    </div>
+
+    <p class="connective" style="margin-top:32px; font-family:'Fraunces',serif; font-style:italic; font-size:19px; max-width:760px;" data-r>The mess/canteen software category (SpaceBasic, MealPe, RB Tech) all list "vendor management" as a feature, and it consistently means logging purchase orders and invoices, not deciding anything. The gap isn't "nobody's building software here." It's that record-keeping tools and enterprise negotiation tools both exist, and neither one makes a live decision when a vendor says no.</p>
+  </div>
+</section>
+
+<!-- ============ 08 PROUD / BUILDING ============ -->
+<section class="scene scene--paper" id="s8">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>08 · The Honest Split</div>
+      <h2 class="headline" style="font-size:clamp(24px,3.4vw,36px)" data-r>What's genuinely earned, and what's genuinely next.</h2>
+    </div>
+
+    <div class="pb-grid" data-r>
+      <div>
+        <div class="pb-col-head proud">What We're Proud Of</div>
+        <div class="pb-item">The deterministic / agentic split is a real architectural decision, not a buzzword, and it's demoed live, not claimed on a slide.</div>
+        <div class="pb-item">Two distinct failure modes recover on their own, in front of the jury, without a script pretending everything works the first time.</div>
+        <div class="pb-item">Every decision is traced and auditable. Nothing the agent does is a black box after the fact.</div>
+        <div class="pb-item">Built to run end to end, backend and frontend both working against a real database, not a local-only mockup.</div>
+      </div>
+      <div>
+        <div class="pb-col-head building">What We're Still Building</div>
+        <div class="pb-item">A hard, agent-independent budget cap that the model cannot reason its way around.</div>
+        <div class="pb-item">An automated evaluation suite, so "the agent chose correctly" is a test result, not a manual check.</div>
+        <div class="pb-item">Real pilot usage with a kitchen, long enough to honestly run a PMF survey.</div>
+        <div class="pb-item">A security and multi-tenant review before a second kitchen ever touches this.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSE ============ -->
+<section id="close">
+  <div class="container">
+    <div class="kicker" data-r>09 · Where This Leaves Us</div>
+    <p class="close-pitch" data-r>We graded ourselves against real frameworks, at their real difficulty, and we're bringing you the number that came out, not the number that looks best. 86 out of 100, weighted for a hackathon-stage system. 64% straight, if you hold us to enterprise production standards we haven't tried to meet yet. Both are true, and we'd rather you hear both from us than find the second one yourselves.</p>
+
+    <div class="close-score-row">
+      <div class="close-score"><div class="csn" data-count="86">0</div><div class="csl">Hackathon-weighted composite</div></div>
+      <div class="close-score"><div class="csn" data-count="64">0</div><div class="csl">Straight OKR average, enterprise bar</div></div>
+      <div class="close-score"><div class="csn" data-count="3">0</div><div class="csl">of 6 responsible-AI checks passed, honestly</div></div>
+      <div class="close-score"><div class="csn">TRL 5</div><div class="csl">Validated in a relevant environment</div></div>
+    </div>
+
+    <div class="close-foot">
+      <div class="word">Mess Kitchen <b>Procurement Agent</b></div>
+      <div class="tm mono">Standards &amp; Benchmarking Review · Self-Graded, Fully Shown</div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress-top');
+  function updateProgress(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop || document.body.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height)*100 : 0) + '%';
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if(!ticking){ window.requestAnimationFrame(function(){ updateProgress(); ticking=false; }); ticking=true; }
+  }, { passive:true });
+  updateProgress();
+
+  var scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+  var tag = document.getElementById('scene-tag');
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  var sIo = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting && entry.intersectionRatio > 0.5){
+        var idx = scenes.indexOf(entry.target);
+        tag.textContent = pad(idx+1) + ' / ' + pad(scenes.length);
+        document.body.classList.toggle('on-dark', entry.target.classList.contains('scene--dark'));
+      }
+    });
+  }, { threshold:[0.5] });
+  scenes.forEach(function(s){ sIo.observe(s); });
+
+  var items = [
+    'GOOGLE OKR SCORING', 'TECHNOLOGY READINESS LEVEL', 'SEAN ELLIS PMF TEST',
+    'RESPONSIBLE-AI AUDITABILITY CHECK', 'HACKATHON-WEIGHTED COMPOSITE', '<b>86</b>/100 REWEIGHTED',
+    '<b>64%</b> STRAIGHT ENTERPRISE-BAR AVERAGE', 'GAPS NAMED, NOT HIDDEN'
+  ];
+  var track = document.getElementById('marquee-track');
+  var html = '';
+  for(var r=0;r<2;r++){
+    items.forEach(function(it){ html += '<span class="marquee-item">' + it + '<span class="marquee-dot"></span></span>'; });
+  }
+  track.innerHTML = html;
+
+  if(window.gsap && window.ScrollTrigger && !reduceMotion){
+    gsap.registerPlugin(ScrollTrigger);
+
+    scenes.forEach(function(scene){
+      var els = scene.querySelectorAll('[data-r]');
+      if(!els.length) return;
+      gsap.set(els, { autoAlpha:0, y:24, filter:'blur(9px)' });
+      ScrollTrigger.create({
+        trigger: scene, start:'top 78%', once:true,
+        onEnter: function(){
+          gsap.to(els, {
+            autoAlpha:1, y:0, filter:'blur(0px)', duration:0.85, ease:'power2.out', stagger:0.08,
+            onStart:function(){ els.forEach(function(el){ el.classList.add('in-view'); }); },
+            onComplete: function(){
+              // fire bar fills belonging to this scene once revealed
+              scene.querySelectorAll('.bar-fill').forEach(function(b){
+                var v = parseFloat(b.getAttribute('data-score')) || 0;
+                gsap.to(b, { width: v + '%', duration:1, ease:'power2.out' });
+              });
+            }
+          });
+        }
+      });
+    });
+
+    // hero score ring + count-up
+    var CIRC = 615.75, TARGET = 86;
+    ScrollTrigger.create({
+      trigger:'#hero', start:'top top', once:true,
+      onEnter: function(){
+        var obj = { v:0 };
+        gsap.to(obj, {
+          v: TARGET, duration:1.8, delay:0.3, ease:'power2.out',
+          onUpdate:function(){
+            document.getElementById('scoreNum').textContent = Math.round(obj.v);
+            var offset = CIRC - (CIRC * obj.v / 100);
+            document.getElementById('scoreRing').style.strokeDashoffset = offset;
+          }
+        });
+      }
+    });
+
+    // close score counters
+    document.querySelectorAll('.close-score .csn[data-count]').forEach(function(el){
+      var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+      ScrollTrigger.create({
+        trigger: el, start:'top 90%', once:true,
+        onEnter: function(){
+          var obj = { v:0 };
+          gsap.to(obj, { v: target, duration:1.2, ease:'power1.out', onUpdate:function(){ el.textContent = Math.round(obj.v); } });
+        }
+      });
+    });
+
+  } else {
+    document.querySelectorAll('[data-r]').forEach(function(el){ el.classList.add('in-view'); el.style.opacity = 1; });
+    document.querySelectorAll('.bar-fill').forEach(function(b){ b.style.width = (b.getAttribute('data-score')||0) + '%'; });
+    document.getElementById('scoreNum').textContent = '86';
+    document.getElementById('scoreRing').style.strokeDashoffset = 615.75 - (615.75*86/100);
+    document.querySelectorAll('.close-score .csn[data-count]').forEach(function(el){ el.textContent = el.getAttribute('data-count'); });
+  }
+})();
+</script>
+
+<script>
+/* ══════════ HALFTONE — raw WebGL2 hero background (brand ink/terracotta separations) ══════════ */
+(function(){
+  var CFG = { clear:'#1C1712', paper:'#1C1712', inkA:'#E7E8D1', inkB:'#B85042', cell:0.0145, angle:0.2618, bloom:0.34, grain:0.012, dprCap:1.5, maxFragments:2400000, fps:60 };
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  var FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var MOBILE = innerWidth < 768 || COARSE;
+
+  var heroEl = document.getElementById('hero');
+  var cv = document.getElementById('halftone-bg');
+  var gl = cv.getContext('webgl2', { antialias:false, alpha:false, powerPreference:'high-performance' });
+  if(!gl){ cv.style.background = CFG.clear; return; }
+
+  var VERT = '#version 300 es\n void main(){ vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }';
+  var FRAG = '#version 300 es\n' +
+    'precision highp float;\n out vec4 O;\n' +
+    'uniform vec2 uRes; uniform float uTime; uniform vec2 uPointer; uniform float uOn;\n' +
+    'uniform vec3 uPaper, uInkA, uInkB; uniform float uCell, uAngle, uBloom, uGrain;\n' +
+    'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }\n' +
+    'float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.0-2.0*f);\n' +
+    '  return mix(mix(h21(i), h21(i+vec2(1,0)), u.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), u.x), u.y); }\n' +
+    'float fbm(vec2 p){ float v = 0.0, a = 0.55; for (int i = 0; i < 4; i++){ v += a * vn(p); p = p * 2.01 + 9.1; a *= 0.5; } return v; }\n' +
+    'mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }\n' +
+    'float screenDot(vec2 sp, float tone, float ang, float cell){\n' +
+    '  vec2 g = rot(ang) * sp / cell; vec2 c = fract(g) - 0.5;\n' +
+    '  float r = sqrt(max(0.0, tone)) * 0.564; float aa = fwidth(g.x) * 1.2 + 0.0015;\n' +
+    '  return smoothstep(r + aa, r - aa, length(c)); }\n' +
+    'void main(){\n' +
+    '  vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;\n' +
+    '  float t = uTime * 0.06;\n' +
+    '  vec2 w = vec2(fbm(sp * 1.3 + t), fbm(sp * 1.3 - t + 5.2)) - 0.5;\n' +
+    '  float field = fbm(sp * 1.9 + w * 0.9 + vec2(0.0, t * 1.4));\n' +
+    '  vec2 pw = (uPointer - 0.5) * vec2(uRes.x / uRes.y, 1.0);\n' +
+    '  float d = length(sp - pw);\n' +
+    '  float bloom = exp(-(d * d) / (uBloom * uBloom)) * uOn;\n' +
+    '  float tone = clamp(field * 1.15 - 0.30 + bloom * 0.62, 0.0, 1.0);\n' +
+    '  float a = screenDot(sp, tone, uAngle, uCell);\n' +
+    '  float b = screenDot(sp, tone * 0.72, uAngle + 1.0472, uCell * 1.18);\n' +
+    '  vec3 col = uPaper;\n' +
+    '  col = mix(col, uInkB, b * 0.42);\n' +
+    '  col = mix(col, uInkA, a);\n' +
+    '  col += (h21(gl_FragCoord.xy + fract(uTime) * 17.9) - 0.5) * uGrain;\n' +
+    '  O = vec4(clamp(col, 0.0, 1.0), 1.0);\n' +
+    '}';
+
+  function compile(type, src){
+    var sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(sh)); throw new Error('shader compile failed'); }
+    return sh;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){ throw new Error('link failed: ' + gl.getProgramInfoLog(prog)); }
+  gl.useProgram(prog);
+
+  var U = {};
+  for(var i=0, n=gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS); i<n; i++){
+    var nm = gl.getActiveUniform(prog, i).name.replace(/\[0\]$/, '');
+    U[nm] = gl.getUniformLocation(prog, nm);
+  }
+  function rgb(h){ var num = parseInt(h.slice(1), 16); return [((num>>16)&255)/255, ((num>>8)&255)/255, (num&255)/255]; }
+
+  var MAX_FRAG = CFG.maxFragments, W=0, H=0;
+  function fit(){
+    var rect = heroEl.getBoundingClientRect();
+    var w = Math.max(1, rect.width), h = Math.max(1, rect.height);
+    var byTier = Math.min(devicePixelRatio || 1, MOBILE ? 1.25 : CFG.dprCap);
+    var byArea = Math.sqrt(MAX_FRAG / Math.max(1, w*h));
+    var dpr = Math.max(0.6, Math.min(byTier, byArea));
+    var nw = Math.round(w*dpr), nh = Math.round(h*dpr);
+    if(nw === W && nh === H) return false;
+    W = nw; H = nh; cv.width = W; cv.height = H; gl.viewport(0,0,W,H);
+    return true;
+  }
+  fit();
+  var lastW = innerWidth;
+  addEventListener('resize', function(){ if(MOBILE && innerWidth === lastW) return; lastW = innerWidth; fit(); }, { passive:true });
+
+  var P = { x:0.5, y:0.5, tx:0.5, ty:0.5, on:0 };
+  if(FINE && !MOBILE){
+    addEventListener('pointermove', function(e){
+      var rect = heroEl.getBoundingClientRect();
+      P.tx = (e.clientX - rect.left) / rect.width;
+      P.ty = 1 - (e.clientY - rect.top) / rect.height;
+      P.on = 1;
+    }, { passive:true });
+  }
+
+  gl.uniform3fv(U.uPaper, rgb(CFG.paper));
+  gl.uniform3fv(U.uInkA, rgb(CFG.inkA));
+  gl.uniform3fv(U.uInkB, rgb(CFG.inkB));
+  gl.uniform1f(U.uCell, CFG.cell);
+  gl.uniform1f(U.uAngle, CFG.angle);
+  gl.uniform1f(U.uBloom, CFG.bloom);
+  gl.uniform1f(U.uGrain, CFG.grain);
+
+  function draw(t){
+    if(fit()) gl.viewport(0,0,W,H);
+    gl.uniform2f(U.uRes, W, H);
+    gl.uniform1f(U.uTime, RM ? 5.0 : t);
+    gl.uniform2f(U.uPointer, P.x, P.y);
+    gl.uniform1f(U.uOn, P.on);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  var t0 = performance.now(), last = t0, budget = 1000/(MOBILE?30:CFG.fps);
+  function loop(now){
+    requestAnimationFrame(loop);
+    if(now - last < budget) return;
+    var dt = Math.min(0.05, (now-last)/1000) || 0.016;
+    last = now;
+    var k = 1 - Math.pow(1 - 0.08, dt*60);
+    P.x += (P.tx - P.x) * k; P.y += (P.ty - P.y) * k;
+    draw((now - t0) / 1000);
+  }
+  draw(0);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

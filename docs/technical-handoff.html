@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mess Kitchen Procurement Agent — Technical Handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root{
+    --paper:#E7E8D1;
+    --white:#FFFFFF;
+    --ink:#2B2118;
+    --ink-deep:#1C1712;
+    --terracotta:#B85042;
+    --terracotta-deep:#8F3C30;
+    --terracotta-light:#D98F82;
+    --sage:#7A9B76;
+    --sage-deep:#5F7D5C;
+    --sage-light:#A7BEAE;
+    --ink-soft:#6B5D52;
+    --taupe:#9C8B7E;
+    --line: rgba(28,23,18,0.16);
+    --line-strong: var(--ink);
+    --line-dark: rgba(231,232,209,0.24);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:auto;}
+  body{
+    margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:var(--paper);
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%232B2118' fill-opacity='0.045' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+  }
+  h1,h2,h3,.serif{font-family:'Fraunces',Georgia,serif; margin:0; font-weight:400;}
+  p{margin:0;}
+  .container{max-width:1180px; margin:0 auto; padding:0 40px;}
+  @media (max-width:760px){ .container{padding:0 22px;} }
+  a{color:inherit;}
+  ::selection{ background:var(--terracotta); color:var(--white); }
+  code, .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  #progress-top{ position:fixed; top:0; left:0; height:3px; width:0%; background:var(--terracotta); z-index:300; }
+  #scene-tag{
+    position:fixed; left:24px; bottom:22px; z-index:300; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink); font-weight:500;
+    background:var(--paper); padding:7px 11px; border:1px solid var(--line-strong);
+  }
+  body.on-dark #scene-tag{ color:var(--paper); background:var(--ink-deep); border-color:var(--line-dark); }
+  @media (max-width:720px){ #scene-tag{ left:16px; bottom:16px; font-size:10px;} }
+
+  .scene{ padding:110px 0; position:relative; }
+  .scene--dark{ background:var(--ink-deep); color:var(--paper); }
+  .scene--paper{ background:var(--paper); color:var(--ink); }
+  .scene--white{ background:var(--white); color:var(--ink); }
+  .scene--dark .hairline{ border-color:var(--line-dark) !important; }
+
+  .kicker{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+    font-weight:500; color:var(--terracotta); margin-bottom:20px; display:flex; align-items:center; gap:12px;
+  }
+  .scene--dark .kicker{ color:var(--terracotta-light); }
+  .kicker::before{ content:''; width:26px; height:1px; background:currentColor; display:inline-block; }
+
+  .headline{ font-size:clamp(30px,4.6vw,54px); line-height:1.06; letter-spacing:-0.01em; max-width:920px; }
+  .headline .accent{ color:var(--terracotta); }
+  .scene--dark .headline .accent{ color:var(--terracotta-light); }
+  .sub{ font-family:'Inter',sans-serif; font-size:clamp(15px,1.6vw,18px); line-height:1.65; color:var(--ink-soft); max-width:640px; margin-top:20px; }
+  .scene--dark .sub{ color:#C9BEB4; }
+  .section-head{ margin-bottom:48px; }
+
+  #masthead{
+    position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between;
+    padding:26px clamp(24px,4vw,48px) 0;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .mark{ width:26px; height:26px; border:1.5px solid var(--terracotta-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--terracotta-light); }
+  .brand .word{ font-family:'Fraunces',serif; font-weight:600; font-size:17px; letter-spacing:-0.01em; color:var(--paper); }
+  .brand .word b{ color:var(--terracotta-light); font-weight:600; }
+  .edition-tag{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#C9BEB4; border:1px solid var(--line-dark); padding:7px 13px; }
+  @media (max-width:640px){ .edition-tag{ display:none; } }
+
+  #hero{ position:relative; min-height:100vh; overflow:hidden; background:var(--ink-deep); padding:0; display:flex; flex-direction:column; }
+  #halftone-bg{ position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; }
+  .hero-scrim{ position:absolute; inset:0; z-index:1; pointer-events:none; }
+  .hero-scrim .radial{ position:absolute; inset:0; background:radial-gradient(circle at 50% 46%, rgba(28,23,18,0.97) 0%, rgba(28,23,18,0.93) 38%, rgba(28,23,18,0.68) 62%, rgba(28,23,18,0.22) 100%); }
+  .hero-scrim .verticals{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(28,23,18,0.78) 0%, transparent 22%, transparent 78%, rgba(28,23,18,0.85) 100%); }
+  .hero-inner{ position:relative; z-index:2; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:120px 24px 0; }
+  .hero-inner .headline{ max-width:1000px; color:var(--paper); }
+  .hero-inner .sub{ max-width:620px; margin-left:auto; margin-right:auto; }
+  .hero-stats{ display:flex; gap:40px; margin-top:50px; flex-wrap:wrap; justify-content:center; }
+  .hero-stat .n{ font-family:'Fraunces',serif; font-weight:600; font-size:26px; color:var(--terracotta-light); }
+  .hero-stat .l{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:#B7ABA0; margin-top:6px; max-width:150px; }
+  #scrollcue{ position:relative; z-index:2; margin:40px auto 30px; display:flex; flex-direction:column; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#a49a90; }
+  #scrollcue .dash{ width:1px; height:30px; background:#8A7E73; animation:cuemove 1.8s ease-in-out infinite; }
+  @keyframes cuemove{ 0%,100%{ opacity:.2; } 50%{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ #scrollcue .dash{ animation:none; } }
+
+  .marquee-band{ background:var(--ink); border-top:1px solid var(--ink-deep); border-bottom:1px solid var(--ink-deep); overflow:hidden; padding:15px 0; position:relative; z-index:3; }
+  .marquee-track{ display:inline-flex; white-space:nowrap; animation:marquee 34s linear infinite; }
+  @media (prefers-reduced-motion: reduce){ .marquee-track{ animation-duration:90s; } }
+  @keyframes marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  .marquee-item{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.05em; color:var(--paper); padding:0 26px; display:inline-flex; align-items:center; gap:26px; }
+  .marquee-item b{ color:var(--terracotta-light); font-weight:600; }
+  .marquee-dot{ width:4px; height:4px; border-radius:50%; background:var(--terracotta); display:inline-block; }
+
+  .lede{ font-family:'Fraunces',serif; font-size:clamp(18px,1.9vw,22px); line-height:1.58; color:var(--ink); max-width:800px; }
+  .lede .dropcap{ float:left; font-family:'Fraunces',serif; font-weight:600; font-size:80px; line-height:0.78; padding:6px 10px 0 0; color:var(--terracotta); }
+  .connective{ margin-top:32px; font-family:'Fraunces',serif; font-size:20px; font-style:italic; max-width:760px; }
+  .scene--dark .connective{ color:var(--paper); }
+
+  .grid-bordered{ display:grid; border-top:1px solid var(--line-strong); border-left:1px solid var(--line-strong); margin-top:44px; }
+  .grid-bordered > *{ border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); padding:26px 24px; }
+  .scene--dark .grid-bordered{ border-color:var(--line-dark); }
+  .scene--dark .grid-bordered > *{ border-color:var(--line-dark); }
+  .grid-2{ grid-template-columns:repeat(2,1fr); }
+  .grid-3{ grid-template-columns:repeat(3,1fr); }
+  .grid-4{ grid-template-columns:repeat(4,1fr); }
+  @media (max-width:900px){ .grid-3, .grid-4{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .grid-3, .grid-4, .grid-2{ grid-template-columns:1fr; } }
+
+  .cell-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:600; color:var(--ink-soft); margin-bottom:11px; }
+  .scene--dark .cell-label{ color:#a49a90; }
+  .cell-title{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin-bottom:9px; }
+  .cell-body{ font-size:14px; line-height:1.6; color:var(--ink-soft); }
+  .scene--dark .cell-body{ color:#C9BEB4; }
+  .hard-hover{ transition:transform .18s ease, box-shadow .18s ease; }
+  .hard-hover:hover{ transform:translate(-3px,-3px); box-shadow:6px 6px 0 var(--ink); position:relative; z-index:2; }
+  .scene--dark .hard-hover:hover{ box-shadow:6px 6px 0 var(--terracotta-light); }
+
+  .callout{ margin-top:30px; padding:22px 24px; background:var(--ink-deep); color:var(--paper); font-size:14.5px; line-height:1.65; max-width:680px; border-left:4px solid var(--terracotta); }
+  .scene--dark .callout{ background:rgba(231,232,209,0.06); border-left-color:var(--terracotta-light); }
+  .callout b{ color:var(--terracotta-light); }
+  .scene--dark .callout b{ color:var(--terracotta-light); }
+
+  .code-block{ margin-top:22px; background:var(--ink-deep); color:#C9BEB4; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7; padding:20px 22px; border:1px solid var(--ink-deep); white-space:pre; overflow-x:auto; max-width:680px; }
+  .code-block .k{ color:var(--terracotta-light); }
+  .code-block .s{ color:var(--sage-light); }
+
+  /* flow spine */
+  .flow-spine{ position:relative; margin-top:56px; padding-left:52px; }
+  .flow-spine::before{ content:''; position:absolute; left:15px; top:6px; bottom:6px; width:2px; background:var(--line-dark); }
+  .flow-spine .spine-fill{ position:absolute; left:15px; top:6px; width:2px; height:0%; background:var(--terracotta-light); }
+  .flow-node{ position:relative; padding-bottom:38px; }
+  .flow-node:last-child{ padding-bottom:0; }
+  .flow-node .dot{ position:absolute; left:-52px; top:2px; width:15px; height:15px; border-radius:50%; background:var(--ink-deep); border:2px solid var(--terracotta-light); }
+  .flow-node .fn-tag{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--terracotta-light); margin-bottom:8px; }
+  .flow-node h4{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--paper); margin-bottom:6px; }
+  .flow-node p{ font-size:13.5px; line-height:1.6; color:#C9BEB4; max-width:520px; }
+  .flow-node .branch{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .flow-node .branch span{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--paper); border:1px solid var(--line-dark); padding:5px 10px; }
+
+  /* worked example */
+  .stage-row{ display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--line-strong); border-left:1px solid var(--line-strong); margin-top:44px; }
+  .stage-row > div{ border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); padding:22px; background:var(--white); }
+  @media (max-width:760px){ .stage-row{ grid-template-columns:1fr; } }
+  .stag{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--terracotta); margin-bottom:10px; }
+  .stage h5{ font-family:'Fraunces',serif; font-size:16px; font-weight:600; margin-bottom:10px; }
+  .num-row{ display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-top:1px dashed var(--line); color:var(--ink-soft); }
+  .num-row:first-of-type{ border-top:none; }
+  .num-row b{ color:var(--ink); font-family:'IBM Plex Mono',monospace; }
+  .num-row.short b{ color:var(--terracotta-deep); }
+  .num-row.ok b{ color:var(--sage-deep); }
+
+  /* loop diagram */
+  .loop-wrap{ display:grid; grid-template-columns:340px 1fr; gap:56px; align-items:center; margin-top:52px; }
+  @media (max-width:900px){ .loop-wrap{ grid-template-columns:1fr; } }
+  .loop-svg-wrap{ position:relative; width:100%; max-width:340px; aspect-ratio:1; margin:0 auto; }
+  .loop-svg-wrap svg{ width:100%; height:100%; }
+  .loop-node{ position:absolute; width:104px; text-align:center; transform:translate(-50%,-50%); }
+  .loop-node .ln-tag{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.1em; color:#a49a90; }
+  .loop-node .ln-title{ font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--paper); margin-top:3px; }
+  .loop-center{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; width:120px; }
+  .loop-center .lc-l{ font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; color:#8A7E73; }
+  .loop-center .lc-t{ font-family:'Fraunces',serif; font-style:italic; font-size:14px; color:var(--terracotta-light); margin-top:4px; }
+  .loop-list{ display:flex; flex-direction:column; gap:18px; }
+  .loop-list .ll-row{ display:flex; gap:16px; align-items:baseline; }
+  .loop-list .ll-n{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--terracotta-light); width:18px; flex-shrink:0; }
+  .loop-list .ll-body h5{ font-family:'Fraunces',serif; font-size:16px; font-weight:600; color:var(--paper); margin-bottom:4px; }
+  .loop-list .ll-body p{ font-size:13.5px; color:#C9BEB4; line-height:1.55; }
+
+  /* vendor table */
+  .vtable{ margin-top:44px; border-top:1px solid var(--line-strong); border-left:1px solid var(--line-strong); max-width:720px; }
+  .vtable .vrow{ display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr; }
+  .vtable .vrow > div{ border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); padding:14px 16px; font-size:13.5px; }
+  .vtable .vhead{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); background:var(--paper); font-weight:600; }
+  .vtable .vname{ font-family:'Fraunces',serif; font-weight:600; }
+  @media (max-width:600px){ .vtable{ font-size:12px; } .vtable .vrow{ grid-template-columns:1fr 1fr 1fr 1fr; } .vtable .vrow > div{ padding:10px 8px; } }
+
+  /* evidence trails (dark scene) */
+  .trail-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:48px; }
+  @media (max-width:840px){ .trail-wrap{ grid-template-columns:1fr; } }
+  .trail-head{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--terracotta-light); margin-bottom:6px; }
+  .trail-title{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--paper); margin-bottom:22px; }
+  .evidence-trail{ position:relative; padding-left:26px; }
+  .evidence-trail .line{ position:absolute; left:5px; top:6px; bottom:6px; width:2px; background:var(--line-dark); }
+  .ev-step{ position:relative; padding-bottom:18px; font-size:13.5px; color:#C9BEB4; line-height:1.5; }
+  .ev-step:last-child{ padding-bottom:0; color:var(--sage-light); font-weight:600; }
+  .ev-step .dot{ position:absolute; left:-26px; top:3px; width:10px; height:10px; background:var(--terracotta-light); border:2px solid var(--ink-deep); box-shadow:0 0 0 1px var(--line-dark); }
+  .ev-step:last-child .dot{ background:var(--sage-light); }
+  .ev-step.fail .dot{ background:var(--terracotta-deep); }
+
+  /* qa cards */
+  .qa-grid{ display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:48px; }
+  @media (max-width:840px){ .qa-grid{ grid-template-columns:1fr; } }
+  .qa-card{ background:rgba(231,232,209,0.05); border:1px solid var(--line-dark); padding:28px; }
+  .qa-q{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--terracotta-light); margin-bottom:10px; }
+  .qa-card h4{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--paper); margin-bottom:14px; line-height:1.3; }
+  .qa-card p{ font-size:13.5px; line-height:1.65; color:#C9BEB4; }
+
+  /* close */
+  #close{ background:var(--ink-deep); color:var(--paper); padding:150px 0 70px; }
+  .close-pitch{ font-family:'Fraunces',serif; font-size:clamp(18px,2.2vw,25px); line-height:1.6; font-style:italic; color:var(--paper); max-width:780px; border-left:3px solid var(--terracotta-light); padding-left:26px; }
+  .close-list{ margin-top:60px; display:flex; flex-direction:column; gap:0; max-width:640px; }
+  .close-list .cl-row{ padding:14px 0; border-top:1px solid var(--line-dark); font-family:'Fraunces',serif; font-size:18px; opacity:0; transform:translateX(-14px); }
+  .close-list .cl-row:last-child{ border-bottom:1px solid var(--line-dark); color:var(--terracotta-light); font-weight:600; }
+  .close-foot{ margin-top:80px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:24px; border-top:1px solid var(--line-dark); padding-top:26px; }
+  .close-foot .word{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; }
+  .close-foot .word b{ color:var(--terracotta-light); }
+  .close-foot .tm{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; color:#8A7E73; }
+
+  [data-r]{ opacity:0; }
+  [data-r].in-view{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){ [data-r]{ opacity:1 !important; } }
+</style>
+</head>
+<body>
+
+<div id="progress-top"></div>
+<div id="scene-tag" class="mono">01 / 12</div>
+
+<!-- ============ HERO ============ -->
+<section class="scene scene--dark" id="hero">
+  <canvas id="halftone-bg"></canvas>
+  <div class="hero-scrim"><div class="radial"></div><div class="verticals"></div></div>
+
+  <header id="masthead">
+    <div class="brand">
+      <div class="mark">M</div>
+      <div class="word">Mess Kitchen <b>Procurement Agent</b></div>
+    </div>
+    <div class="edition-tag mono">Technical Handoff · Jury Review</div>
+  </header>
+
+  <div class="hero-inner">
+    <div class="kicker" data-r>Architecture Briefing</div>
+    <h1 class="headline" data-r>Deterministic logic decides <span class="accent">what's needed.</span><br>An agent decides <span class="accent">how to get it.</span></h1>
+    <p class="sub" data-r>An agentic procurement system that combines deterministic demand planning, live inventory state, vendor intelligence, and an LLM decision loop to resolve kitchen shortages under budget and reliability constraints, on its own.</p>
+    <div class="hero-stats" data-r>
+      <div class="hero-stat"><div class="n" data-count="2">0</div><div class="l">kinds of intelligence, cleanly split</div></div>
+      <div class="hero-stat"><div class="n" data-count="4">0</div><div class="l">backend modules, one job each</div></div>
+      <div class="hero-stat"><div class="n" data-count="2">0</div><div class="l">failure modes demonstrated live</div></div>
+      <div class="hero-stat"><div class="n" data-count="0">0</div><div class="l">LLM calls when there's no shortage</div></div>
+    </div>
+  </div>
+
+  <div id="scrollcue"><span>Scroll</span><span class="dash"></span></div>
+</section>
+
+<div class="marquee-band"><div class="marquee-track" id="marquee-track"></div></div>
+
+<!-- ============ 02 CORE IDEA ============ -->
+<section class="scene scene--paper" id="s2">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>01 · The One-Line Version</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>What this system actually is, in a sentence a judge can repeat back.</h2>
+    </div>
+
+    <p class="lede" data-r><span class="dropcap">T</span>his is an agentic procurement system that combines deterministic demand planning, real-time inventory state, vendor intelligence, and an LLM-based decision loop to autonomously resolve kitchen shortages under budget and reliability constraints. Every section below exists to prove one clause of that sentence at a time, so nothing in this deck is decoration.</p>
+
+    <div class="grid-bordered grid-2" data-r>
+      <div class="hard-hover">
+        <div class="cell-label">Deterministic Intelligence</div>
+        <div class="cell-title">Menu → Requirements → Inventory → Shortage</div>
+        <div class="cell-body">Handled entirely by Python. Fixed arithmetic, no ambiguity, no model in the loop. This is where correctness has to be guaranteed.</div>
+      </div>
+      <div class="hard-hover">
+        <div class="cell-label">Agentic Intelligence</div>
+        <div class="cell-title">Shortage → Evaluate → Decide → Act → Replan</div>
+        <div class="cell-body">Handled by the LLM, once there's an actual trade-off to reason about: price against reliability against budget against availability.</div>
+      </div>
+    </div>
+
+    <p class="connective" data-r>We don't ask an LLM how much rice five hundred students need. Python answers that. The agent only starts once there's a real decision on the table.</p>
+  </div>
+</section>
+
+<!-- ============ 03 STACK ============ -->
+<section class="scene scene--white" id="s3">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>02 · What It's Built On</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>A database-backed agent system, not "an AI database."</h2>
+      <p class="sub" data-r>Ordinary, boring, defensible engineering everywhere correctness matters. The model only shows up where reasoning earns its cost.</p>
+    </div>
+
+    <div class="grid-bordered grid-4" data-r>
+      <div><div class="cell-label">Frontend</div><div class="cell-title" style="font-size:16px">Next.js / React</div><div class="cell-body">Dashboard, inventory, vendors, orders, demo controls.</div></div>
+      <div><div class="cell-label">Styling</div><div class="cell-title" style="font-size:16px">Tailwind CSS</div><div class="cell-body">The interface layer for the whole control center.</div></div>
+      <div><div class="cell-label">Backend</div><div class="cell-title" style="font-size:16px">Python + FastAPI</div><div class="cell-body">REST API, orchestration, the front door to everything.</div></div>
+      <div><div class="cell-label">Server</div><div class="cell-title" style="font-size:16px">Uvicorn</div><div class="cell-body">ASGI server running the FastAPI app.</div></div>
+      <div><div class="cell-label">Agent Reasoning</div><div class="cell-title" style="font-size:16px">Groq LLM</div><div class="cell-body">Decision-making only, never arithmetic or inventory truth.</div></div>
+      <div><div class="cell-label">Agent Framework</div><div class="cell-title" style="font-size:16px">Custom loop</div><div class="cell-body">Observe → decide → act → replan, written in plain Python.</div></div>
+      <div><div class="cell-label">Validation</div><div class="cell-title" style="font-size:16px">Pydantic</div><div class="cell-body">Every request and response shape checked before it moves.</div></div>
+      <div><div class="cell-label">Planning</div><div class="cell-title" style="font-size:16px">Python</div><div class="cell-body">Requirement and shortage calculation, deterministically.</div></div>
+      <div><div class="cell-label">Database</div><div class="cell-title" style="font-size:16px">SQLite</div><div class="cell-body">Persistent demo state: vendors, orders, runs, traces.</div></div>
+      <div><div class="cell-label">API Layer</div><div class="cell-title" style="font-size:16px">REST / JSON</div><div class="cell-body">The contract between frontend and backend.</div></div>
+      <div><div class="cell-label">Deployment</div><div class="cell-title" style="font-size:16px">Render</div><div class="cell-body">Frontend and backend hosted and reachable, live.</div></div>
+      <div><div class="cell-label">Source Control</div><div class="cell-title" style="font-size:16px">Git + GitHub</div><div class="cell-body">Standard version control, standard deploy pipeline.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 SYSTEM FLOW ============ -->
+<section class="scene scene--dark" id="s4">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>03 · How a Request Actually Travels</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>From a menu on a screen to an order placed with a vendor.</h2>
+      <p class="sub" data-r>One request, one straight path down through the system. Nothing here happens twice, and nothing happens out of order.</p>
+    </div>
+
+    <div class="flow-spine" id="flowSpine">
+      <div class="spine-fill" id="spineFill"></div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">Kitchen Staff</div>
+        <h4>Menu, student count, optional budget</h4>
+        <p>The only input a human ever provides. Everything downstream is derived from this.</p>
+      </div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">Next.js Frontend</div>
+        <h4>Dashboard, Inventory, Vendors, Orders, Demo</h4>
+        <p>Submits the request over HTTP and later renders whatever the backend decides.</p>
+      </div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">FastAPI Backend</div>
+        <h4>/kitchen/run-procurement and friends</h4>
+        <p>The front door. Routes into planning, memory, the agent, and its tools.</p>
+        <div class="branch"><span>Planning Engine</span><span>Memory Layer</span></div>
+      </div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">Shortage State</div>
+        <h4>Only what's actually missing</h4>
+        <p>If nothing is short, the path ends here. No shortage, no model call.</p>
+      </div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">AI Procurement Agent</div>
+        <h4>Observe → decide → act → observe → replan</h4>
+        <p>Reasons over vendor tools, inventory tools, and order tools to resolve the shortage.</p>
+        <div class="branch"><span>Inventory Tools</span><span>Vendor Tools</span><span>Order Tools</span></div>
+      </div>
+
+      <div class="flow-node" data-r>
+        <div class="dot"></div>
+        <div class="fn-tag">Procurement Result</div>
+        <h4>What to buy, from whom, at what cost, and why</h4>
+        <p>Written back to SQLite and rendered on the dashboard as orders and an agent trace.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 PLANNING ENGINE ============ -->
+<section class="scene scene--paper" id="s5">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>04 · The Planning Engine</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>Deliberately boring, on purpose.</h2>
+      <p class="sub" data-r>500 students, Chicken Biryani, Raita. Here's what the deterministic layer does with that before the agent ever sees a thing.</p>
+    </div>
+
+    <div class="stage-row" data-r>
+      <div class="stage"><div class="stag">Required</div><h5>From the menu</h5>
+        <div class="num-row"><span>Rice</span><b>100 kg</b></div>
+        <div class="num-row"><span>Chicken</span><b>75 kg</b></div>
+        <div class="num-row"><span>Curd</span><b>50 kg</b></div>
+      </div>
+      <div class="stage"><div class="stag">In Stock</div><h5>From live inventory</h5>
+        <div class="num-row"><span>Rice</span><b>60 kg</b></div>
+        <div class="num-row"><span>Chicken</span><b>80 kg</b></div>
+        <div class="num-row"><span>Curd</span><b>20 kg</b></div>
+      </div>
+      <div class="stage"><div class="stag">Shortage</div><h5>What reaches the agent</h5>
+        <div class="num-row short"><span>Rice</span><b>40 kg short</b></div>
+        <div class="num-row ok"><span>Chicken</span><b>no shortage</b></div>
+        <div class="num-row short"><span>Curd</span><b>30 kg short</b></div>
+      </div>
+    </div>
+
+    <div class="callout" data-r><b>Chicken never reaches the procurement agent.</b> There's no shortage, so there's no decision to make. That's not an accident, it's the architecture working exactly as intended.</div>
+
+    <div class="code-block" data-r><span class="k">if</span> <span class="k">not</span> shortage:
+    <span class="k">return</span> {<span class="s">"status"</span>: <span class="s">"no_action_needed"</span>}
+    <span class="k"># no LLM call happens below this line</span></div>
+
+    <p class="connective" data-r>"We don't use the LLM for arithmetic or inventory truth. We use deterministic software for that, and reserve the agent for decisions where trade-offs actually exist."</p>
+  </div>
+</section>
+
+<!-- ============ 06 AGENT LOOP ============ -->
+<section class="scene scene--dark" id="s6">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>05 · The Agent Loop</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>A chatbot produces text. This produces outcomes.</h2>
+      <p class="sub" data-r>The loop is the whole difference between an LLM feature and an actual agent: it observes state, decides, acts, and checks what happened before deciding again.</p>
+    </div>
+
+    <div class="loop-wrap">
+      <div class="loop-svg-wrap" data-r>
+        <svg viewBox="0 0 340 340">
+          <circle cx="170" cy="170" r="128" fill="none" stroke="rgba(231,232,209,0.14)" stroke-width="2"></circle>
+          <circle id="loopRing" cx="170" cy="170" r="128" fill="none" stroke="#D98F82" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="804" stroke-dashoffset="804" transform="rotate(-90 170 170)"></circle>
+        </svg>
+        <div class="loop-node" style="top:12%;left:50%;"><div class="ln-tag mono">01</div><div class="ln-title">Observe</div></div>
+        <div class="loop-node" style="top:50%;left:88%;"><div class="ln-tag mono">02</div><div class="ln-title">Decide</div></div>
+        <div class="loop-node" style="top:88%;left:50%;"><div class="ln-tag mono">03</div><div class="ln-title">Act</div></div>
+        <div class="loop-node" style="top:50%;left:12%;"><div class="ln-tag mono">04</div><div class="ln-title">Replan</div></div>
+        <div class="loop-center"><div class="lc-l mono">objective</div><div class="lc-t">resolve the shortage</div></div>
+      </div>
+
+      <div class="loop-list">
+        <div class="ll-row" data-r><div class="ll-n mono">01</div><div class="ll-body"><h5>Observe</h5><p>Inventory, vendors, prices, reliability, and remaining budget, read fresh, not assumed.</p></div></div>
+        <div class="ll-row" data-r><div class="ll-n mono">02</div><div class="ll-body"><h5>Decide</h5><p>Weighs the alternatives against every constraint at once, not just price.</p></div></div>
+        <div class="ll-row" data-r><div class="ll-n mono">03</div><div class="ll-body"><h5>Act</h5><p>Places the order and updates state. This is a real action, not a suggestion to a human.</p></div></div>
+        <div class="ll-row" data-r><div class="ll-n mono">04</div><div class="ll-body"><h5>Replan</h5><p>If the action fails, the new state feeds straight back into observe. No human in the loop.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 VENDOR MODEL ============ -->
+<section class="scene scene--white" id="s7">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>06 · The Vendor Decision Model</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>The cheapest vendor isn't automatically the right one.</h2>
+      <p class="sub" data-r>Procurement is multi-objective. The agent has to hold price, reliability, availability, budget, and quantity in its head at once.</p>
+    </div>
+
+    <div class="vtable" data-r>
+      <div class="vrow vhead"><div>Vendor</div><div>Price</div><div>Reliability</div><div>Availability</div></div>
+      <div class="vrow"><div class="vname">Vendor A</div><div>₹4,800</div><div>92%</div><div>Available</div></div>
+      <div class="vrow"><div class="vname">Vendor B</div><div>₹4,300</div><div>68%</div><div>Available</div></div>
+      <div class="vrow"><div class="vname">Vendor C</div><div>₹5,100</div><div>99%</div><div>Available</div></div>
+    </div>
+
+    <div class="callout" style="background:var(--ink-deep); max-width:720px;" data-r>Vendor B is cheapest, and often the wrong pick. A cost-only agent buys unreliable supply. This agent weighs cost against reliability, availability, and what's left of the budget before it commits to anything.</div>
+  </div>
+</section>
+
+<!-- ============ 08 FAILURE RECOVERY ============ -->
+<section class="scene scene--dark" id="s8">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>07 · The Failure-Recovery Demo</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>Probably the most important five minutes of the live demo.</h2>
+      <p class="sub" data-r>Two failure modes, staged on purpose, both recovered without a human touching anything.</p>
+    </div>
+
+    <div class="trail-wrap">
+      <div data-r>
+        <div class="trail-head mono">Failure Mode 01</div>
+        <div class="trail-title">Vendor unavailable</div>
+        <div class="evidence-trail">
+          <div class="line"></div>
+          <div class="ev-step"><div class="dot"></div>Agent checks Vendor A</div>
+          <div class="ev-step fail"><div class="dot"></div>Vendor A is unavailable</div>
+          <div class="ev-step"><div class="dot"></div>Agent does not attempt the order</div>
+          <div class="ev-step"><div class="dot"></div>Agent evaluates Vendor B instead</div>
+          <div class="ev-step"><div class="dot"></div>Order placed with Vendor B</div>
+        </div>
+      </div>
+
+      <div data-r>
+        <div class="trail-head mono">Failure Mode 02</div>
+        <div class="trail-title">Order rejected mid-run</div>
+        <div class="evidence-trail">
+          <div class="line"></div>
+          <div class="ev-step"><div class="dot"></div>Agent selects Vendor A</div>
+          <div class="ev-step"><div class="dot"></div>Places the order</div>
+          <div class="ev-step fail"><div class="dot"></div>Vendor A rejects the order</div>
+          <div class="ev-step"><div class="dot"></div>Agent receives the failure, state has changed</div>
+          <div class="ev-step"><div class="dot"></div>Re-evaluates remaining candidates, selects Vendor B</div>
+          <div class="ev-step"><div class="dot"></div>Order placed, success</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="connective" data-r style="color:var(--paper);">That's actual closed-loop autonomy, not a script that assumes the happy path.</p>
+  </div>
+</section>
+
+<!-- ============ 09 STATE / API / FRONTEND ============ -->
+<section class="scene scene--paper" id="s9">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>08 · State, API, and the Control Surface</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>An agent without an audit trail is hard to trust.</h2>
+    </div>
+
+    <div class="grid-bordered grid-3" data-r>
+      <div class="hard-hover">
+        <div class="cell-label">Memory Layer</div>
+        <div class="cell-title">SQLite: inventory, vendors, orders, runs, traces</div>
+        <div class="cell-body">Every run answers: what happened, what the agent did, which vendor was chosen, and what happened when something failed.</div>
+      </div>
+      <div class="hard-hover">
+        <div class="cell-label">API Layer</div>
+        <div class="cell-title">POST /kitchen/run-procurement</div>
+        <div class="cell-body">Menu, student count, and budget in. Shortage, requirements, and result out. FastAPI is the front door, nothing touches the database directly.</div>
+      </div>
+      <div class="hard-hover">
+        <div class="cell-label">Frontend</div>
+        <div class="cell-title">Dashboard · Inventory · Vendors · Orders · Demo</div>
+        <div class="cell-body">Demo isn't decoration, it's the control surface for deliberately introducing the failures shown above, live.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 PRODUCTION ============ -->
+<section class="scene scene--white" id="s10">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>09 · Local to Production</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>The exact same architecture, just hosted.</h2>
+    </div>
+
+    <div class="grid-bordered grid-2" data-r>
+      <div>
+        <div class="cell-label">Local</div>
+        <div class="cell-title" style="font-size:17px">localhost:3000 → localhost:8000</div>
+        <div class="cell-body">Next.js dev server talking to FastAPI over plain HTTP on one machine.</div>
+      </div>
+      <div>
+        <div class="cell-label">Production</div>
+        <div class="cell-title" style="font-size:17px">Render Frontend → Render Backend → Groq + SQLite</div>
+        <div class="cell-body">Same code, same contract, deployed and reachable over HTTPS.</div>
+      </div>
+    </div>
+
+    <div class="code-block" data-r>allow_origins=[
+    <span class="s">"http://localhost:3000"</span>,
+    <span class="s">"https://procurement-pilot-frontend.onrender.com"</span>,
+]</div>
+    <p class="cell-body" style="margin-top:14px; max-width:560px;" data-r>CORS is configured explicitly for both environments, so the browser knows the frontend is authorized to talk to the backend in either one.</p>
+  </div>
+</section>
+
+<!-- ============ 11 Q&A PREP ============ -->
+<section class="scene scene--dark" id="s11">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker" data-r>10 · Jury Q&A, Rehearsed</div>
+      <h2 class="headline" style="font-size:clamp(26px,3.6vw,40px)" data-r>The two questions almost certainly coming.</h2>
+    </div>
+
+    <div class="qa-grid">
+      <div class="qa-card" data-r>
+        <div class="qa-q mono">Question</div>
+        <h4>"Why is this an agent and not just an LLM-powered application?"</h4>
+        <p>Because the LLM isn't generating a recommendation for a human to act on. It operates inside a closed loop with a concrete objective and tools representing the kitchen's real operational state. It observes state, selects an action, executes it, observes the outcome, and replans when the environment changes. It can select a vendor, get rejected, and recover on its own. That's the loop, not a chat reply.</p>
+      </div>
+      <div class="qa-card" data-r>
+        <div class="qa-q mono">Question</div>
+        <h4>"Why not just give the entire problem to the LLM?"</h4>
+        <p>Because LLMs are probabilistic and inventory quantities, demand calculations, and financial constraints need to be deterministic. We use traditional software wherever correctness is non-negotiable, arithmetic, inventory truth, validation, state, and reserve the agent for exactly the part of the problem that involves genuine trade-offs: vendor evaluation, weighing constraints, deciding, and recovering.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSE ============ -->
+<section id="close">
+  <div class="container">
+    <div class="kicker" data-r>11 · The Elevator Version</div>
+    <p class="close-pitch" data-r>"A Next.js frontend backed by a Python FastAPI service. When the kitchen submits a menu and student count, deterministic planning calculates ingredient requirements against persistent inventory. Only genuine shortages reach the procurement agent, which evaluates cost, reliability, availability, and budget through real vendor, inventory, and ordering tools, then executes and observes the result. If a vendor rejects an order, the changed state feeds straight back into the loop and the agent replans. Every decision is persisted and auditable."</p>
+
+    <div class="close-list" id="closeList">
+      <div class="cl-row">We identified a real operational problem.</div>
+      <div class="cl-row">We modeled the operational state deterministically.</div>
+      <div class="cl-row">We gave an agent a constrained objective and real tools.</div>
+      <div class="cl-row">We let it act in the environment.</div>
+      <div class="cl-row">We deliberately introduced failures.</div>
+      <div class="cl-row">It recovered, on its own.</div>
+    </div>
+
+    <div class="close-foot">
+      <div class="word">Mess Kitchen <b>Procurement Agent</b></div>
+      <div class="tm mono">Technical Handoff · Built. Tested. Ready.</div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* progress bar */
+  var bar = document.getElementById('progress-top');
+  function updateProgress(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop || document.body.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height)*100 : 0) + '%';
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if(!ticking){ window.requestAnimationFrame(function(){ updateProgress(); ticking=false; }); ticking=true; }
+  }, { passive:true });
+  updateProgress();
+
+  /* scene tag + dark chrome */
+  var scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+  var tag = document.getElementById('scene-tag');
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  var sIo = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting && entry.intersectionRatio > 0.5){
+        var idx = scenes.indexOf(entry.target);
+        tag.textContent = pad(idx+1) + ' / ' + pad(scenes.length);
+        document.body.classList.toggle('on-dark', entry.target.classList.contains('scene--dark'));
+      }
+    });
+  }, { threshold:[0.5] });
+  scenes.forEach(function(s){ sIo.observe(s); });
+
+  /* marquee content */
+  var items = [
+    '<b>2</b> KINDS OF INTELLIGENCE', '<b>4</b> BACKEND MODULES, ONE JOB EACH',
+    'OBSERVE &#8594; DECIDE &#8594; ACT &#8594; REPLAN', '<b>2</b> FAILURE MODES, BOTH RECOVERED',
+    'GROQ LLM + FASTAPI + NEXT.JS', 'SQLITE AUDIT TRAIL ON EVERY RUN',
+    'ZERO LLM CALLS WHEN THERE IS NO SHORTAGE', 'DETERMINISTIC PLANNING, AGENTIC DECISIONS'
+  ];
+  var track = document.getElementById('marquee-track');
+  var html = '';
+  for(var r=0;r<2;r++){
+    items.forEach(function(it){ html += '<span class="marquee-item">' + it + '<span class="marquee-dot"></span></span>'; });
+  }
+  track.innerHTML = html;
+
+  /* ---------------- GSAP ---------------- */
+  if(window.gsap && window.ScrollTrigger && !reduceMotion){
+    gsap.registerPlugin(ScrollTrigger);
+
+    // staggered reveal per scene, blur-rise
+    scenes.forEach(function(scene){
+      var els = scene.querySelectorAll('[data-r]');
+      if(!els.length) return;
+      gsap.set(els, { autoAlpha:0, y:26, filter:'blur(10px)' });
+      ScrollTrigger.create({
+        trigger: scene,
+        start: 'top 78%',
+        once: true,
+        onEnter: function(){
+          gsap.to(els, {
+            autoAlpha:1, y:0, filter:'blur(0px)', duration:0.9, ease:'power2.out',
+            stagger:0.09,
+            onStart: function(){ els.forEach(function(el){ el.classList.add('in-view'); }); }
+          });
+        }
+      });
+    });
+
+    // close list rows
+    gsap.to('#closeList .cl-row', {
+      opacity:1, x:0, duration:0.7, ease:'power2.out', stagger:0.14,
+      scrollTrigger:{ trigger:'#closeList', start:'top 80%', once:true }
+    });
+
+    // hero stat counters
+    document.querySelectorAll('.hero-stat .n').forEach(function(el){
+      var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+      var obj = { v:0 };
+      gsap.to(obj, {
+        v: target, duration:1.4, ease:'power1.out', delay:0.4,
+        onUpdate:function(){ el.textContent = Math.round(obj.v); }
+      });
+    });
+
+    // flow spine fill, scrubbed
+    gsap.to('#spineFill', {
+      height:'100%', ease:'none',
+      scrollTrigger:{ trigger:'#flowSpine', start:'top 65%', end:'bottom 60%', scrub:0.6 }
+    });
+
+    // agent loop ring, draws in as you scroll the section
+    gsap.to('#loopRing', {
+      strokeDashoffset:0, ease:'none',
+      scrollTrigger:{ trigger:'#s6', start:'top 60%', end:'bottom 40%', scrub:0.6 }
+    });
+
+  } else {
+    // fallback: reveal everything immediately, no motion
+    document.querySelectorAll('[data-r]').forEach(function(el){ el.classList.add('in-view'); el.style.opacity = 1; });
+    document.querySelectorAll('.hero-stat .n').forEach(function(el){ el.textContent = el.getAttribute('data-count'); });
+    var fill = document.getElementById('spineFill'); if(fill) fill.style.height = '100%';
+    var ring = document.getElementById('loopRing'); if(ring) ring.style.strokeDashoffset = 0;
+    document.querySelectorAll('#closeList .cl-row').forEach(function(el){ el.style.opacity = 1; el.style.transform='none'; });
+  }
+})();
+</script>
+
+<script>
+/* ══════════ HALFTONE — raw WebGL2 hero background (brand ink/terracotta separations) ══════════ */
+(function(){
+  var CFG = { clear:'#1C1712', paper:'#1C1712', inkA:'#E7E8D1', inkB:'#B85042', cell:0.0145, angle:0.2618, bloom:0.34, grain:0.012, dprCap:1.5, maxFragments:2400000, fps:60 };
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  var FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var MOBILE = innerWidth < 768 || COARSE;
+
+  var heroEl = document.getElementById('hero');
+  var cv = document.getElementById('halftone-bg');
+  var gl = cv.getContext('webgl2', { antialias:false, alpha:false, powerPreference:'high-performance' });
+  if(!gl){ cv.style.background = CFG.clear; return; }
+
+  var VERT = '#version 300 es\n void main(){ vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }';
+  var FRAG = '#version 300 es\n' +
+    'precision highp float;\n out vec4 O;\n' +
+    'uniform vec2 uRes; uniform float uTime; uniform vec2 uPointer; uniform float uOn;\n' +
+    'uniform vec3 uPaper, uInkA, uInkB; uniform float uCell, uAngle, uBloom, uGrain;\n' +
+    'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }\n' +
+    'float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.0-2.0*f);\n' +
+    '  return mix(mix(h21(i), h21(i+vec2(1,0)), u.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), u.x), u.y); }\n' +
+    'float fbm(vec2 p){ float v = 0.0, a = 0.55; for (int i = 0; i < 4; i++){ v += a * vn(p); p = p * 2.01 + 9.1; a *= 0.5; } return v; }\n' +
+    'mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }\n' +
+    'float screenDot(vec2 sp, float tone, float ang, float cell){\n' +
+    '  vec2 g = rot(ang) * sp / cell; vec2 c = fract(g) - 0.5;\n' +
+    '  float r = sqrt(max(0.0, tone)) * 0.564; float aa = fwidth(g.x) * 1.2 + 0.0015;\n' +
+    '  return smoothstep(r + aa, r - aa, length(c)); }\n' +
+    'void main(){\n' +
+    '  vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;\n' +
+    '  float t = uTime * 0.06;\n' +
+    '  vec2 w = vec2(fbm(sp * 1.3 + t), fbm(sp * 1.3 - t + 5.2)) - 0.5;\n' +
+    '  float field = fbm(sp * 1.9 + w * 0.9 + vec2(0.0, t * 1.4));\n' +
+    '  vec2 pw = (uPointer - 0.5) * vec2(uRes.x / uRes.y, 1.0);\n' +
+    '  float d = length(sp - pw);\n' +
+    '  float bloom = exp(-(d * d) / (uBloom * uBloom)) * uOn;\n' +
+    '  float tone = clamp(field * 1.15 - 0.30 + bloom * 0.62, 0.0, 1.0);\n' +
+    '  float a = screenDot(sp, tone, uAngle, uCell);\n' +
+    '  float b = screenDot(sp, tone * 0.72, uAngle + 1.0472, uCell * 1.18);\n' +
+    '  vec3 col = uPaper;\n' +
+    '  col = mix(col, uInkB, b * 0.42);\n' +
+    '  col = mix(col, uInkA, a);\n' +
+    '  col += (h21(gl_FragCoord.xy + fract(uTime) * 17.9) - 0.5) * uGrain;\n' +
+    '  O = vec4(clamp(col, 0.0, 1.0), 1.0);\n' +
+    '}';
+
+  function compile(type, src){
+    var sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(sh)); throw new Error('shader compile failed'); }
+    return sh;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){ throw new Error('link failed: ' + gl.getProgramInfoLog(prog)); }
+  gl.useProgram(prog);
+
+  var U = {};
+  for(var i=0, n=gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS); i<n; i++){
+    var nm = gl.getActiveUniform(prog, i).name.replace(/\[0\]$/, '');
+    U[nm] = gl.getUniformLocation(prog, nm);
+  }
+  function rgb(h){ var num = parseInt(h.slice(1), 16); return [((num>>16)&255)/255, ((num>>8)&255)/255, (num&255)/255]; }
+
+  var MAX_FRAG = CFG.maxFragments, W=0, H=0;
+  function fit(){
+    var rect = heroEl.getBoundingClientRect();
+    var w = Math.max(1, rect.width), h = Math.max(1, rect.height);
+    var byTier = Math.min(devicePixelRatio || 1, MOBILE ? 1.25 : CFG.dprCap);
+    var byArea = Math.sqrt(MAX_FRAG / Math.max(1, w*h));
+    var dpr = Math.max(0.6, Math.min(byTier, byArea));
+    var nw = Math.round(w*dpr), nh = Math.round(h*dpr);
+    if(nw === W && nh === H) return false;
+    W = nw; H = nh; cv.width = W; cv.height = H; gl.viewport(0,0,W,H);
+    return true;
+  }
+  fit();
+  var lastW = innerWidth;
+  addEventListener('resize', function(){ if(MOBILE && innerWidth === lastW) return; lastW = innerWidth; fit(); }, { passive:true });
+
+  var P = { x:0.5, y:0.5, tx:0.5, ty:0.5, on:0 };
+  if(FINE && !MOBILE){
+    addEventListener('pointermove', function(e){
+      var rect = heroEl.getBoundingClientRect();
+      P.tx = (e.clientX - rect.left) / rect.width;
+      P.ty = 1 - (e.clientY - rect.top) / rect.height;
+      P.on = 1;
+    }, { passive:true });
+  }
+
+  gl.uniform3fv(U.uPaper, rgb(CFG.paper));
+  gl.uniform3fv(U.uInkA, rgb(CFG.inkA));
+  gl.uniform3fv(U.uInkB, rgb(CFG.inkB));
+  gl.uniform1f(U.uCell, CFG.cell);
+  gl.uniform1f(U.uAngle, CFG.angle);
+  gl.uniform1f(U.uBloom, CFG.bloom);
+  gl.uniform1f(U.uGrain, CFG.grain);
+
+  function draw(t){
+    if(fit()) gl.viewport(0,0,W,H);
+    gl.uniform2f(U.uRes, W, H);
+    gl.uniform1f(U.uTime, RM ? 5.0 : t);
+    gl.uniform2f(U.uPointer, P.x, P.y);
+    gl.uniform1f(U.uOn, P.on);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  var t0 = performance.now(), last = t0, budget = 1000/(MOBILE?30:CFG.fps);
+  function loop(now){
+    requestAnimationFrame(loop);
+    if(now - last < budget) return;
+    var dt = Math.min(0.05, (now-last)/1000) || 0.016;
+    last = now;
+    var k = 1 - Math.pow(1 - 0.08, dt*60);
+    P.x += (P.tx - P.x) * k; P.y += (P.ty - P.y) * k;
+    draw((now - t0) / 1000);
+  }
+  draw(0);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
