@@ -33,7 +33,8 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     memory.init_db()
-
+    if not memory.list_vendors():
+        seed_data.seed()
 
 @app.get("/admin/seed")
 def admin_seed():
