@@ -5,6 +5,7 @@ Run with: uvicorn main:app --reload --port 8000
 Then visit http://localhost:8000/docs for the auto-generated API contract
 your frontend teammates can build against immediately.
 """
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -16,6 +17,7 @@ from typing import List
 import memory
 import agent
 import planning
+import seed_data
 
 app = FastAPI(title="Mess Kitchen Procurement Agent")
 app.add_middleware(
@@ -31,6 +33,12 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     memory.init_db()
+
+
+@app.get("/admin/seed")
+def admin_seed():
+    seed_data.seed()
+    return {"status": "seeded"}
 
 
 class RunRequest(BaseModel):
