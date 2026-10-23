@@ -1,103 +1,68 @@
 # Procurement Pilot
 
-**An autonomous AI agent that runs vegetable, grocery, and gas procurement
-for institutional kitchens, checking real vendor prices, enforcing a hard
-budget, and recovering on its own when a vendor fails.**
+An AI agent that handles vegetable, grocery and gas buying for institutional kitchens. It checks vendor prices,
+stays inside a hard budget, and finds another vendor on its own when one fails.
 
-🏆 **First Place Overall**, LaunchPad X, National Innovation Hackathon 2026,
-organized by VetriaAI in partnership with Sreenidhi Institute of Science
-and Technology (SNIST), Hyderabad. Built for Track 1, The Agent Hub.
+We built it for Track 1 (The Agent Hub) at LaunchPad X, the National Innovation Hackathon 2026, organised by VetriaAI
+with Sreenidhi Institute of Science and Technology (SNIST), Hyderabad. It won First Place Overall.
 
----
+Hostel and college mess kitchens mostly buy by phone and memory: call a known vendor, hope they have stock at a fair
+price, and scramble if they say no. There is no fallback when a trusted vendor does not deliver.
 
-## The problem
+## What it does
 
-Hostel and college mess kitchens manage procurement almost entirely by
-phone and memory: call a known vendor, hope they have stock, hope the
-price is fair, and scramble if they say no. There's no system that
-compares vendor prices and reliability in real time, and no automatic
-recovery plan when a trusted vendor fails to deliver.
+Given tonight's menu and student count, the backend works out what is short against current inventory (plain
+arithmetic, no AI). Only that shortage list goes to the agent, which then checks vendor prices and reliability, places
+orders within the budget, and reacts if a vendor fails, rejects an order or runs short mid-order.
 
-## What this does
+In one run against the live model the budget was ₹1,516.62 and the agent spent ₹1,333.20. Its top-scored vendor for
+onions could only supply 4kg of a 7.6kg order. There is no "split across vendors" branch in the code; the agent read
+the capacity limit from a tool result and bought the remaining 3.6kg from a second vendor. We also forced a vendor to
+reject an order outright, and the order history shows the agent picked another vendor in the same run with no human
+input.
 
-Given tonight's menu and student count, the agent:
-1. Calculates exactly what's short against current inventory (deterministic, no AI)
-2. Checks real vendor prices and reliability scores
-3. Places orders within a hard budget it cannot override
-4. Reacts on its own if a vendor fails, rejects an order, or runs short mid-order
+## How it is built
 
-## Proven, not just claimed
-
-In a real run against the live model:
-- Budget assigned: **₹1,516.62** · Spent: **₹1,333.20**, fully within budget
-- The agent's top-scored vendor for onions could only supply 4kg of a
-  7.6kg order before hitting its capacity limit. **Nobody coded a "split
-  across vendors" branch.** The agent read that limit off a real tool
-  call and sourced the remaining 3.6kg from a second vendor on its own.
-- Forced a vendor to reject an order outright. Confirmed in the order
-  history: the agent recovered by selecting an alternative vendor in the
-  same run, with no human input.
-
-Full numbers and methodology in [`resolved_cons_and_cracks.md`](./resolved_cons_and_cracks.md).
-
-## Architecture
-
-| Layer | What it does | Where |
+| Part | What it does | Where |
 |---|---|---|
-| **Planning** | Menu → ingredient requirement → shortage, pure deterministic math, zero AI calls | `backend/planning.py` |
-| **Agent core** | The reasoning loop: decides what to check and when, never touches arithmetic | `backend/agent.py` (Groq, `openai/gpt-oss-120b`) |
-| **Tools** | Four real actions the agent can take: check price, check availability, check budget, place order | `backend/tools.py` |
-| **Guardrails** | Budget caps, a ₹2,000 approval threshold, and a shortage ceiling, all enforced in backend code, not by asking the model nicely | `backend/tools.py` |
-| **Memory** | Vendor reliability and price history, persists and updates after every order | `backend/memory.py` (SQLite) |
-| **Dashboard** | Five pages: live reasoning view, vendors, orders, inventory, and one-click demo controls | `frontend/` (Next.js) |
+| Planning | Menu to ingredient requirement to shortage, deterministic, no model calls | `backend/planning.py` |
+| Agent loop | Decides what to check and when; never does the arithmetic | `backend/agent.py` (Groq, `openai/gpt-oss-120b`) |
+| Tools | Check price, check availability, check budget, place order | `backend/tools.py` |
+| Guardrails | Run budget, a ₹2,000 single-order approval limit and a shortage ceiling, enforced in backend code | `backend/tools.py` |
+| Memory | Vendor reliability and price history, updated after every order | `backend/memory.py` (SQLite) |
+| Dashboard | Reasoning view, vendors, orders, inventory and demo controls | `frontend/` (Next.js) |
 
-The vendor score itself is a weighted formula, 60% reliability, 40% price,
-the same methodology real procurement teams use, just sized for two
-inputs instead of a dozen because that's what a same-day retail purchase
-actually has. The model never computes this score, it's deterministic
-Python; the agent only ever receives an already-ranked vendor list.
+The vendor score is 60% reliability and 40% price, computed in Python. The model never calculates it; the agent only
+gets a list that is already ranked. If no budget is given, the default is the cheapest known price for each short
+item plus 15%, which is tight enough that always picking the most reliable vendor will often go over.
 
-## Tech stack
-
-- **Backend:** Python, FastAPI, SQLite
-- **Agent:** Groq (`openai/gpt-oss-120b`)
-- **Frontend:** Next.js, React, TypeScript
-- **Deployment:** Render (backend), Vercel or GitHub Pages (frontend/static pages)
-
-## Running it locally
+## Run it locally
 
 ```bash
-# Backend
+# backend
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # add your GROQ_API_KEY
-python3 seed_data.py
 uvicorn main:app --reload --port 8000
 
-# Frontend, in a second terminal
+# frontend, in a second terminal
 cd frontend
 npm install
 npm run dev
 ```
-Visit `http://localhost:3000`. Full API contract at `http://localhost:8000/docs`.
 
-## The pitch materials
+Then open http://localhost:3000 (API docs at http://localhost:8000/docs). The backend seeds the mock vendor
+data on startup if the database has no vendors; `python3 seed_data.py` or `GET /admin/seed` reseeds it by hand. All
+vendor names, prices and reliability scores are invented for the demo.
 
-- [`speaking_script.md`](./speaking_script.md): the spoken jury pitch
-- [`resolved_cons_and_cracks.md`](./resolved_cons_and_cracks.md): every
-  technical review question this project was stress-tested against, and
-  the honest answer to each one
-- `/docs`: the live scorecard, technical handoff, and pitch pages
-  (see below for links once published via GitHub Pages)
+The `docs/` folder has static pitch pages (a pitch and a self-graded scorecard) meant for GitHub Pages.
 
-## What's genuinely still open
+## Still open
 
-- A hard, agent-independent budget cap the model cannot reason its way
-  around (currently enforced but worth a second, model-blind layer)
-- An automated evaluation suite, so "the agent chose correctly" is a
-  test result, not a manual check
-- Real pilot usage with an actual kitchen
-- A security and multi-tenant review before a second kitchen onboards
+- A second, model-blind budget cap the agent cannot reason its way around
+- An automated evaluation suite, so "the agent chose correctly" is a test result and not a manual check
+- Real pilot use with an actual kitchen
+- A security and multi-tenant review before a second kitchen comes on
 
-Built by the Computer Science and Engineering team at ACE Engineering College.
+Built by the CSE team at ACE Engineering College.

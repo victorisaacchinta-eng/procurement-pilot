@@ -1,23 +1,17 @@
 """
-The agent's "Hands": real functions it can call mid-conversation.
+The tools the agent can call. Each one works against the SQLite memory
+layer and is registered with Groq in agent.py. They can be tested
+without an API key.
 
-Each function here does actual work against the SQLite memory layer.
-These are wired to the Groq API as tool definitions in agent.py.
-Keeping the tool logic separate from the agent loop makes each function
-independently testable without needing an API key.
-
-Guardrail design, all enforced HERE in backend code, never left to the
-model to self-police:
+Guardrails, all enforced here rather than left to the model:
   - AUTO_APPROVE_LIMIT_INR: a single order at/above this needs a human.
   - Run-level budget: enforced in place_order against agent_runs.budget,
     computed from actual spend, not trusted from model arithmetic.
-  - Vendor capacity: a vendor can only fulfill up to its known stock cap
-    for an item, forcing genuine partial-fulfillment decisions rather
-    than an infinite-supply assumption.
-  - Shortage-quantity ceiling: cumulative quantity ordered for an item
-    in a run cannot exceed the deterministically computed shortage
-    (with a small rounding buffer), this single check is what prevents
-    BOTH duplicate re-ordering and hallucinated quantities.
+  - Vendor capacity: a vendor can only fill up to its stock cap for an
+    item, so partial fills happen.
+  - Shortage ceiling: total quantity ordered for an item in a run cannot
+    exceed the computed shortage (plus a small rounding buffer). This one
+    check blocks both duplicate orders and made-up quantities.
 """
 
 import memory
@@ -28,11 +22,8 @@ SHORTAGE_BUFFER = 1.05  # allow 5% over the computed shortage for rounding, no m
 
 def check_vendor_prices(item: str):
     """
-    Look up every known vendor for a given item, with current price,
-    capacity, reliability score, and an explicit computed score (see
-    memory.score_vendors). This is the agent's first real move: it
-    can't decide who to buy from without checking this, and the score
-    it's handed is deterministic, not something it invents.
+    Look up every known vendor for an item, with current price, capacity,
+    reliability and the computed score (see memory.score_vendors).
     """
     vendors = memory.get_vendors_for_item(item)
     if not vendors:
@@ -42,12 +33,10 @@ def check_vendor_prices(item: str):
 
 def check_vendor_availability(vendor_name: str):
     """
-    Confirm whether a specific vendor can currently deliver. This is what
-    turns up "unavailable" when the demo failure is triggered mid-run,
-    forcing the agent to notice and re-plan. Note this only reports
-    upfront unavailability, a vendor can still pass this check and then
-    have its order rejected (fail_next_order) or partially fulfilled
-    (capacity), see place_order.
+    Check whether a vendor can currently deliver. Returns "unavailable"
+    when the demo failure is triggered. Only covers upfront unavailability:
+    a vendor can pass this and still have its order rejected
+    (fail_next_order) or partially filled (capacity), see place_order.
     """
     vendor = memory.get_vendor_by_name(vendor_name)
     if not vendor:
@@ -61,11 +50,8 @@ def check_vendor_availability(vendor_name: str):
 
 def check_budget_status(run_id: int):
     """
-    Deterministic, backend-computed remaining budget for this run. The
-    agent is deliberately NOT trusted to sum up spend itself across a
-    multi-turn conversation, exactly the same principle as menu/shortage
-    math: real arithmetic is backend logic, the agent only reasons over
-    the result.
+    Remaining budget for this run, computed from actual spend. The agent is
+    not trusted to add up spend itself across turns.
     """
     run = memory.get_run(run_id)
     if not run or run.get("budget") is None:
@@ -81,10 +67,8 @@ def check_budget_status(run_id: int):
 
 def place_order(vendor_name: str, item: str, quantity: float, unit: str, run_id: int):
     """
-    Actually place the order. Every outcome below is a real, distinct
-    tool result the agent has to read and react to, none of these are
-    pre-scripted branches in the conversation, they're computed fresh
-    against current DB state every call:
+    Place the order. Each outcome below is computed from current DB state
+    and returned for the agent to react to:
 
       - exceeds_shortage: cumulative quantity for this item this run
         would exceed the computed shortage. Blocks both duplicate orders
@@ -196,9 +180,8 @@ def place_order(vendor_name: str, item: str, quantity: float, unit: str, run_id:
 
 def describe_event(tool_name: str, phase: str, payload: dict) -> str:
     """
-    Turn a raw tool call/result into one clean, human-readable line for
-    the frontend event timeline. Judges need evidence of actions and
-    decisions, not a raw JSON dump or exposed chain-of-thought.
+    Turn a raw tool call/result into one readable line for the frontend
+    event timeline.
     """
     if tool_name == "check_vendor_prices":
         if phase == "call":
@@ -313,7 +296,7 @@ TOOL_DEFINITIONS = [
 
 
 def execute_tool(name: str, tool_input: dict, run_id: int):
-    """Dispatch a tool_use request from Claude to the real Python function."""
+    """Dispatch a tool call from the model to the matching Python function."""
     if name == "check_vendor_prices":
         return check_vendor_prices(tool_input["item"])
     if name == "check_vendor_availability":

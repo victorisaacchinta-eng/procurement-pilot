@@ -1,15 +1,9 @@
 "use client";
 
 /**
- * The reasoning view: the screen judges actually watch.
- *
- * Design stays inside the established Mess Agent brand, terracotta/sand/
- * sage, Cambria display type, system body type, no em dashes anywhere in
- * copy. The signature element is the reasoning trail: a connected vertical
- * timeline of what the agent actually did, revealed with a staggered
- * animation once the real response lands. Nothing here fakes real-time
- * streaming, the API returns one batch response, the stagger is an honest
- * presentation of events that already happened in that order.
+ * The reasoning view: run the agent and show what it did as a vertical
+ * timeline. The API returns one batch response, so this is not live
+ * streaming; the stagger just reveals events in the order they happened.
  */
 
 import { useEffect, useState } from "react";
