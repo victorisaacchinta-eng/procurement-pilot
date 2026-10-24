@@ -1,7 +1,12 @@
 """
-Menu -> ingredient requirements -> shortage. Plain arithmetic, no model
-calls. The agent only sees the shortage list this produces, never the raw
-menu or student count.
+Deterministic backend logic: menu -> ingredient requirements -> shortage.
+
+This entire file deliberately contains ZERO calls to any LLM API.
+Per the foundation review: quantity math is backend arithmetic, not
+something an LLM should be trusted to compute. The agent only ever sees
+the OUTPUT of this file (a shortage list), never the raw menu or student
+count. This keeps the boundary between deterministic backend logic and
+agent reasoning explicit and inspectable.
 """
 
 import memory
@@ -17,8 +22,9 @@ RECIPES = {
 
 def calculate_requirements(menu_items: list[str], student_count: int) -> dict:
     """
-    Given tonight's menu and how many students are eating, return total
-    ingredient quantities needed.
+    Pure arithmetic. Given tonight's menu and how many students are
+    eating, return total ingredient quantities needed. No LLM involved,
+    same inputs always produce the same outputs.
     """
     requirements: dict[str, dict] = {}
     for dish in menu_items:
@@ -44,7 +50,8 @@ def get_inventory() -> dict:
 
 
 def calculate_shortage(requirements: dict, inventory: dict) -> dict:
-    """Return only the ingredients where we don't have enough on hand."""
+    """Also pure arithmetic. Only ingredients where we don't have enough
+    on hand come back, everything else is silently sufficient."""
     shortage = {}
     for item, req in requirements.items():
         on_hand = inventory.get(item, {"quantity": 0})["quantity"]
@@ -68,9 +75,12 @@ def set_inventory(item: str, quantity: float, unit: str):
 def estimate_default_budget(shortage: dict) -> float:
     """
     Default run budget when none is supplied: cheapest known vendor per
-    item, summed, plus 15%. Kept tight on purpose: always picking the most
-    reliable vendor will often go over, so the agent has to weigh
-    reliability against price.
+    item, summed, plus a 15% buffer. Deliberately tight, not generous,
+    a plan that always reaches for the top-reliability (not cheapest)
+    vendor for every item will often breach this, which is the point:
+    it forces the agent to actually weigh reliability against price
+    under a real constraint, not just default to "always pick the best
+    reliability score" with no consequence.
     """
     total = 0.0
     for item, info in shortage.items():

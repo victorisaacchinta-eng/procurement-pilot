@@ -1,8 +1,9 @@
 """
-FastAPI endpoints the Next.js frontend calls.
+The Face's backend: FastAPI endpoints the Next.js frontend calls.
 
 Run with: uvicorn main:app --reload --port 8000
-The API contract is at http://localhost:8000/docs.
+Then visit http://localhost:8000/docs for the auto-generated API contract
+your frontend teammates can build against immediately.
 """
 
 from dotenv import load_dotenv
@@ -66,13 +67,16 @@ class KitchenRunRequest(BaseModel):
 @app.post("/kitchen/run-procurement")
 def run_kitchen_procurement(req: KitchenRunRequest):
     """
-    Main demo entrypoint. Menu and student count go in, the backend works
-    out requirements and shortage against current inventory, and only the
-    shortage list is handed to the agent. No shortage, no agent run.
+    The real demo entrypoint. Menu and student count go in, deterministic
+    backend logic computes ingredient requirements and shortage against
+    current inventory, and ONLY the resulting shortage list is handed to
+    the agent. If there's no shortage, the agent never runs at all.
 
-    Default budget if none is given: cheapest known vendor per item plus
-    15%. A greedy cheapest plan usually fits; always picking the most
-    reliable vendor usually doesn't, so the agent has to trade off.
+    If `budget` isn't provided, we compute a reasonable default: the
+    cost of buying everything from the cheapest known vendor per item,
+    with a 15% buffer. This means a naive greedy plan usually fits, but
+    a plan that leans on the most reliable (not cheapest) vendor for
+    everything usually won't, forcing genuine trade-off decisions.
     """
     requirements = planning.calculate_requirements(req.menu, req.student_count)
     inventory = planning.get_inventory()
@@ -150,8 +154,8 @@ class DemoFailRequest(BaseModel):
 @app.post("/demo/set-vendor-availability")
 def demo_fail_vendor(req: DemoFailRequest):
     """
-    Demo control, not an agent tool. Marks a vendor unavailable before the
-    agent checks, so it moves on to the next candidate.
+    Demo control, not an agent tool. Flip a vendor to unavailable BEFORE
+    the agent even checks, so it skips straight to the next candidate.
     """
     vendor = memory.get_vendor_by_name(req.vendor_name)
     if not vendor:
@@ -169,8 +173,9 @@ class DemoFailNextOrderRequest(BaseModel):
 def demo_fail_next_order(req: DemoFailNextOrderRequest):
     """
     Second demo failure mode: the vendor still passes the availability
-    check, but the next order placed with them is rejected. Fires once,
-    then clears itself.
+    check, but the NEXT order placed with them gets rejected. This is
+    the more dramatic version, the agent commits, then gets bounced.
+    Fires once, then clears itself automatically.
     """
     vendor = memory.get_vendor_by_name(req.vendor_name)
     if not vendor:

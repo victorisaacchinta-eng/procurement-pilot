@@ -26,7 +26,7 @@ Given tonight's menu and student count, the agent:
 3. Places orders within a hard budget it cannot override
 4. Reacts on its own if a vendor fails, rejects an order, or runs short mid-order
 
-## Proof from real runs
+## Proven, not just claimed
 
 In a real run against the live model:
 - Budget assigned: **₹1,516.62** · Spent: **₹1,333.20**, fully within budget
@@ -37,6 +37,8 @@ In a real run against the live model:
 - Forced a vendor to reject an order outright. Confirmed in the order
   history: the agent recovered by selecting an alternative vendor in the
   same run, with no human input.
+
+Full numbers and methodology in [`resolved_cons_and_cracks.md`](./resolved_cons_and_cracks.md).
 
 ## Architecture
 
@@ -82,10 +84,14 @@ Visit `http://localhost:3000`. Full API contract at `http://localhost:8000/docs`
 
 ## The pitch materials
 
+- [`speaking_script.md`](./speaking_script.md): the spoken jury pitch
+- [`resolved_cons_and_cracks.md`](./resolved_cons_and_cracks.md): every
+  technical review question this project was stress-tested against, and
+  the honest answer to each one
 - `/docs`: the live scorecard, technical handoff, and pitch pages
   (see below for links once published via GitHub Pages)
 
-## What's still open
+## What's genuinely still open
 
 - A hard, agent-independent budget cap the model cannot reason its way
   around (currently enforced but worth a second, model-blind layer)

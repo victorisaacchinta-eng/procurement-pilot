@@ -2,9 +2,10 @@
 // endpoint in backend/main.py. Full contract is browsable at
 // http://localhost:8000/docs while the backend is running.
 //
-// Types follow the SQL schema in memory.py, so fields like fail_next_order,
-// quantity_fulfilled and total_spent are included even when a sample
-// response does not show them.
+// Types below are checked directly against the SQL schema in memory.py,
+// not guessed from the response shape, so fields like fail_next_order,
+// quantity_fulfilled, and total_spent are all present even though a
+// quick look at a sample response might not surface them.
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 

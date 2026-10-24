@@ -1,10 +1,18 @@
 "use client";
 
 /**
- * Shared colours, fonts and small components for every page.
+ * Shared design tokens and small building blocks, used across every page
+ * so the vendors/orders/inventory/demo screens feel like one product
+ * instead of five separately-built pages. Same brand as every deck
+ * delivered for this project: terracotta/sand/sage/dark, Cambria
+ * display, system-ui body, no em dashes in any copy.
  *
- * Motion is transform/opacity only and respects reduced-motion. The nav
- * indicator measures the active link's position and slides to it.
+ * Motion follows Emil Kowalski's principles from the project's own
+ * design system doc: fast enough to feel responsive, deliberate, never
+ * bouncy, transform/opacity only, reduced-motion respected everywhere.
+ * The signature touch here is the nav bar's sliding indicator, it
+ * measures the active link's real position and animates to it, rather
+ * than a static border that jumps.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -31,11 +39,12 @@ export const FONT_BODY =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
 export const FONT_MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
-// no bounce
+// Deliberate, not bouncy, Kowalski's "fast enough to feel responsive."
 export const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const EASE_FAST = "cubic-bezier(0.4, 0, 0.2, 1)";
 
-// warm-tinted shadows to match the palette
+// Warm-tinted shadows, not generic gray, so elevation still reads as
+// part of this brand rather than a default browser drop-shadow.
 export const SHADOW_SM = "0 1px 2px rgba(43, 33, 24, 0.06), 0 1px 1px rgba(43, 33, 24, 0.04)";
 export const SHADOW_MD = "0 4px 14px rgba(43, 33, 24, 0.08), 0 2px 4px rgba(43, 33, 24, 0.05)";
 export const SHADOW_LG = "0 12px 28px rgba(43, 33, 24, 0.12), 0 4px 8px rgba(43, 33, 24, 0.06)";

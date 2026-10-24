@@ -1,9 +1,10 @@
 """
-Seeds the database with mock vendors, prices and stock for the demo.
+Seeds the database with a MOCK vendor dataset for demo purposes.
 
-None of the vendor names, prices or reliability scores are real market
-data; they are made up so the demo does not depend on a live source.
-main.py seeds on startup if there are no vendors. To reseed by hand:
+None of these vendor names, prices, or reliability scores are real market
+data, they're invented so the demo runs reliably on stage without
+depending on any live scraped source. Run this once before your first
+/agent/run:
 
     python seed_data.py
 """
@@ -23,9 +24,10 @@ VENDORS = [
 ]
 
 # (vendor_name, item, price, unit, max_available)
-# max_available=None means unlimited. Hyderabad Mandi Direct is capped low on
-# onions on purpose, so a large enough order gets partially filled; the
-# agent's requested quantity is checked against this cap.
+# max_available=None means unlimited. Hyderabad Mandi Direct is deliberately
+# capped low on onions, so a large-enough order genuinely triggers a partial
+# fulfillment, not a scripted one, whatever quantity the agent asks for is
+# checked against this cap for real.
 PRICES = [
     ("Uppal Vegetable Traders", "onions", 32.0, "kg", None),
     ("Rajesh Fresh Produce", "onions", 28.0, "kg", None),
@@ -41,8 +43,9 @@ PRICES = [
 ]
 
 
-# (item, quantity_on_hand, unit). Understocked on onions and toor dal on
-# purpose, so there is a shortage the first time the demo runs.
+# (item, quantity_on_hand, unit) — deliberately understocked on onions and
+# toor dal so a shortage exists out of the box and the agent has real work
+# to do the first time anyone runs the demo.
 STARTING_INVENTORY = [
     ("onions", 2.0, "kg"),
     ("tomatoes", 3.0, "kg"),
