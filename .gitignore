@@ -1,0 +1,5 @@
+# macOS Finder metadata, anywhere in the repo
+.DS_Store
+
+# Local env files anywhere in the repo (the .example files stay tracked)
+.env
