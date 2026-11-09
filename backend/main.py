@@ -78,6 +78,13 @@ def run_kitchen_procurement(req: KitchenRunRequest):
     a plan that leans on the most reliable (not cheapest) vendor for
     everything usually won't, forcing genuine trade-off decisions.
     """
+    unknown = planning.unknown_dishes(req.menu)
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown dishes: {', '.join(unknown)}. Known dishes: {', '.join(sorted(planning.RECIPES))}.",
+        )
+
     requirements = planning.calculate_requirements(req.menu, req.student_count)
     inventory = planning.get_inventory()
     shortage = planning.calculate_shortage(requirements, inventory)
