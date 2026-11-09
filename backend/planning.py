@@ -20,17 +20,35 @@ RECIPES = {
 }
 
 
+def normalise_dish(name: str) -> str:
+    """Match menu text to RECIPES keys: trim, collapse inner spaces, lowercase."""
+    return " ".join(name.split()).lower()
+
+
+def unknown_dishes(menu_items: list[str]) -> list[str]:
+    """Menu entries with no recipe, as typed. Callers should reject these
+    rather than let them silently contribute nothing to requirements."""
+    return [dish for dish in menu_items if normalise_dish(dish) not in RECIPES]
+
+
 def calculate_requirements(menu_items: list[str], student_count: int) -> dict:
     """
     Pure arithmetic. Given tonight's menu and how many students are
     eating, return total ingredient quantities needed. No LLM involved,
     same inputs always produce the same outputs.
+
+    Dish names are normalised, so "Onion Curry" matches "onion curry",
+    and a dish listed twice is only counted once. Unknown dishes are
+    skipped here; check unknown_dishes() first to reject them.
     """
     requirements: dict[str, dict] = {}
+    seen: set[str] = set()
     for dish in menu_items:
-        recipe = RECIPES.get(dish)
-        if not recipe:
+        key = normalise_dish(dish)
+        recipe = RECIPES.get(key)
+        if not recipe or key in seen:
             continue
+        seen.add(key)
         for ingredient, (qty_per_student, unit) in recipe.items():
             needed = qty_per_student * student_count
             if ingredient in requirements:
