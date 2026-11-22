@@ -78,13 +78,43 @@ export type KitchenRunResult = AgentRunResult & {
   spent?: number;
 };
 
+// Error thrown for a non-2xx response. message carries FastAPI's
+// {"detail": ...} when the body has one, so the UI can say what went
+// wrong (for example which dish was unknown) instead of only the status.
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function apiError(res: Response, prefix: string): Promise<ApiError> {
+  let detail: unknown;
+  try {
+    detail = (await res.json())?.detail;
+  } catch {
+    // Body was empty or not JSON; fall back to the status code.
+  }
+  // HTTPException gives a string; request validation (422) gives a list.
+  let reason = "";
+  if (typeof detail === "string") {
+    reason = detail;
+  } else if (Array.isArray(detail)) {
+    reason = detail
+      .map((d) => (d && typeof d.msg === "string" ? d.msg : ""))
+      .filter(Boolean)
+      .join("; ");
+  }
+  return new ApiError(`${prefix}: ${reason || res.status}`, res.status);
+}
+
 export async function runAgent(objective: string): Promise<AgentRunResult> {
   const res = await fetch(`${API_URL}/agent/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ objective }),
   });
-  if (!res.ok) throw new Error(`Agent run failed: ${res.status}`);
+  if (!res.ok) throw await apiError(res, "Agent run failed");
   return res.json();
 }
 
@@ -98,7 +128,7 @@ export async function runKitchenProcurement(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ menu, student_count: studentCount, budget }),
   });
-  if (!res.ok) throw new Error(`Kitchen run failed: ${res.status}`);
+  if (!res.ok) throw await apiError(res, "Kitchen run failed");
   return res.json();
 }
 
